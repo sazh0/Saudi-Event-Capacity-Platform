@@ -716,8 +716,8 @@ function Hero({ navigate, videoSrc }) {
 
   const stats = [
     { val: 25, suf: '+', label: <>نقطة اتصال<br />تم تحليلها</>, c: C.bronzeXL },
-    { val: 10, suf: 'آلاف+', label: 'سيناريوهات تحليلية', c: C.greenXL },
-    { val: 10, suf: '+', label: 'جهات داعمة', c: C.bronzeL }
+    { val: 10, suf: 'آلاف+', label: <>سيناريوهات<br />تحليليـة</>, c: C.greenXL },
+    { val: 10, suf: '+', label: <>جهــات<br />داعـمة</>, c: C.bronzeL }
   ]
 
   const btn = {
