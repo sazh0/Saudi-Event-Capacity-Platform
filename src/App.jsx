@@ -3208,7 +3208,7 @@ function Dashboard({ db, fileDate }) {
 
 /* ════════════════════════════════════════════════════════════════
    ROOT
-════════════════════════════════════════════════════════════════ */
+════════════════════════════════════════════════════════════════ 
 export default function App() {
   const [db, setDb] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(null)
   const [fileDate, setFileDate] = useState(null)
@@ -3227,6 +3227,80 @@ export default function App() {
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <LoadingScreen />
+  if (error || !db) return <ErrorScreen message={error || 'خطأ غير معروف'} />
+  return <Dashboard db={db} fileDate={fileDate} />
+} */
+
+export default function App() {
+  const [db, setDb] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [fileDate, setFileDate] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadData() {
+      try {
+        /* Step 1 — fetch the tiny meta file (~0.5 KB) */
+        const metaRes = await fetch('/housing-meta.json')
+        const lastMod = metaRes.headers.get('Last-Modified')
+        setFileDate(lastMod ? new Date(lastMod) : new Date())
+        const meta = await metaRes.json()
+
+        if (!meta.years?.length) {
+          setError('لا توجد سنوات في البيانات')
+          return
+        }
+
+        /* Step 2 — fetch all year files IN PARALLEL */
+        const yearFetches = meta.years.map(yr =>
+          fetch(`/housing-${yr}.json`).then(r => {
+            if (!r.ok) throw new Error(`فشل تحميل بيانات ${yr}`)
+            return r.json()
+          })
+        )
+        const yearArrays = await Promise.all(yearFetches)
+
+        if (cancelled) return
+
+        /* Step 3 — merge & hydrate rows (restore date + derived fields) */
+        const allRows = yearArrays
+          .flat()
+          .map(r => {
+            const d = new Date(r.date)   // epoch-ms → Date (instant)
+            return {
+              ...r,
+              date: d,
+              yr: d.getFullYear(),
+              mo: d.getMonth(),
+              day: d.getDate(),
+            }
+          })
+          .sort((a, b) => a.date - b.date)
+
+        if (!allRows.length) {
+          setError('لا توجد بيانات صالحة')
+          return
+        }
+
+        setDb({
+          rows: allRows,
+          warns: meta.warns || [],
+          years: meta.years,
+        })
+      } catch (e) {
+        if (!cancelled) setError(e.message)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadData()
+    return () => { cancelled = true }
   }, [])
 
   if (loading) return <LoadingScreen />

@@ -1702,10 +1702,13 @@ const MethodDivider = () => (
 )
 
 /* Equation block: colored title + two stacked variable rows with result arrow (used in الفرضيات tab) */
-const EquationBlock = ({ title, color, rows }) => (
+const EquationBlock = ({ title, color, rows, transparent }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
     <div style={{
-      background: color, color: '#fff',
+      background: transparent ? `${color}18` : color,
+      color: transparent ? color : '#fff',
+      border: transparent ? `1px solid ${color}30` : 'none',
+      borderBottom: transparent ? 'none' : undefined,
       borderRadius: '8px 8px 0 0', padding: '7px 6px',
       textAlign: 'center', fontSize: 9.5, fontWeight: 800, lineHeight: 1.4,
       minHeight: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1713,8 +1716,8 @@ const EquationBlock = ({ title, color, rows }) => (
       {title}
     </div>
     <div style={{
-      background: 'rgba(65,64,66,0.03)',
-      border: '1px solid rgba(65,64,66,0.10)',
+      background: transparent ? `${color}08` : 'rgba(65,64,66,0.03)',
+      border: transparent ? `1px solid ${color}30` : '1px solid rgba(65,64,66,0.10)',
       borderTop: 'none',
       borderRadius: '0 0 6px 6px',
       padding: '6px 4px',
@@ -2242,7 +2245,8 @@ function PageHeader({
                         gap: 6, alignItems: 'stretch',
                       }}>
                         <div style={{
-                          background: T.bronze, color: '#fff',
+                          background: `${T.dem}18`, color: T.dem,
+                          border: `1px solid ${T.dem}30`,
                           borderRadius: 8, padding: '12px 8px',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           textAlign: 'center', fontSize: 10.5, fontWeight: 800, lineHeight: 1.5,
@@ -2253,6 +2257,7 @@ function PageHeader({
                         <EquationBlock
                           title="الحمل اليومي لمعتمري الداخل (مبيت)"
                           color={T.dem}
+                          transparent
                           rows={[
                             { label: 'عدد المعتمرين المستهدفين', sub: '(معتمر)' },
                             { label: 'متوسط الإقامة لمعتمري الداخل', sub: '(ليلة)' },
@@ -2262,6 +2267,7 @@ function PageHeader({
                         <EquationBlock
                           title="الحمل اليومي لمعتمري الخارج"
                           color={T.dem}
+                          transparent
                           rows={[
                             { label: 'عدد المعتمرين المستهدفين', sub: '(معتمر)' },
                             { label: 'متوسط الإقامة لمعتمري الخارج', sub: '(ليلة)' },
@@ -2310,7 +2316,8 @@ function PageHeader({
                         gap: 6, alignItems: 'stretch',
                       }}>
                         <div style={{
-                          background: T.bronze, color: '#fff',
+                          background: `${T.sup}18`, color: T.sup,
+                          border: `1px solid ${T.sup}30`,
                           borderRadius: 8, padding: '12px 8px',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           textAlign: 'center', fontSize: 10.5, fontWeight: 800, lineHeight: 1.5,
@@ -2331,6 +2338,7 @@ function PageHeader({
                         <EquationBlock
                           title="عدد الأسرّة للمشاريع المستقبلية"
                           color={T.sup}
+                          transparent
                           rows={[
                             { label: 'عدد الغرف', sub: '(غرفة / يوم)' },
                             { label: 'متوسط عدد الأسرّة في الغرفة', sub: '(سرير / غرفة)' },
@@ -2341,6 +2349,7 @@ function PageHeader({
                         <EquationBlock
                           title="عدد الأسرّة للمرافق المرخصة"
                           color={T.sup}
+                          transparent
                           rows={[
                             { label: 'عدد الغرف', sub: '(غرفة / يوم)' },
                             { label: 'متوسط عدد الأسرّة في الغرفة', sub: '(سرير / غرفة)' },

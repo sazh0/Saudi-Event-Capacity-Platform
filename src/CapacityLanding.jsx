@@ -715,8 +715,8 @@ function Hero({ navigate, videoSrc }) {
   const intensity = hovered ? 1.7 : Math.max(0.55, 1 - scrollY / 500)
 
   const stats = [
-    { val: 25, suf: '+', label: 'نقطة اتصال تم تحليلها', c: C.bronzeXL },
-    { val: 10, suf: ' آلاف+', label: 'سيناريوهات تحليلية', c: C.greenXL },
+    { val: 25, suf: '+', label: <>نقطة اتصال<br />تم تحليلها</>, c: C.bronzeXL },
+    { val: 10, suf: 'آلاف+', label: 'سيناريوهات تحليلية', c: C.greenXL },
     { val: 10, suf: '+', label: 'جهات داعمة', c: C.bronzeL }
   ]
 
