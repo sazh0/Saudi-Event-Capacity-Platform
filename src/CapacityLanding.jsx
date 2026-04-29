@@ -715,9 +715,9 @@ function Hero({ navigate, videoSrc }) {
   const intensity = hovered ? 1.7 : Math.max(0.55, 1 - scrollY / 500)
 
   const stats = [
-    { val: 25, suf: '+', label: 'نقطة اتصال', c: C.bronzeXL },
-    { val: 18, suf: 'م', label: 'معتمر سنوياً', c: C.greenXL },
-    { val: 99, suf: '%', label: 'دقة التحليل', c: C.bronzeL },
+    { val: 25, suf: '+', label: 'نقطة اتصال تم تحليلها', c: C.bronzeXL },
+    { val: 10, suf: ' آلاف+', label: 'سيناريوهات تحليلية', c: C.greenXL },
+    { val: 10, suf: '+', label: 'جهات داعمة', c: C.bronzeL }
   ]
 
   const btn = {
@@ -790,8 +790,7 @@ function Hero({ navigate, videoSrc }) {
 
         {/* Description */}
         <p style={{ fontSize: 'clamp(13.5px,1.8vw,16.5px)', color: C.grayL, lineHeight: 2, maxWidth: 580, margin: '0 auto 40px', fontWeight: 400, animation: 'cl-fadeInUp 0.85s ease 0.38s both' }}>
-          منصة متكاملة لقياس وتحليل الطاقة الاستيعابية الآمنة عبر نقاط الاتصال الحيوية في مكة المكرمة والمدينة المنورة والمنافذ والمطارات، لدعم القرار التشغيلي وضمان جاهزية الخدمات.
-        </p>
+          منصة رقمية تُعنى بقياس وتحليل الطاقة الاستيعابية الآمنة عبر مختلف نقاط الاتصال خلال رحلة ضيوف الرحمن، بهدف دعم اتخاذ القرار التشغيلي، وضمان جاهزية الخدمات المقدمة بكفاءة وموثوقية، بما يسهم في تحقيق مستهدفات رؤية المملكة 2030.        </p>
 
         {/* CTAs */}
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', animation: 'cl-fadeInUp 0.85s ease 0.48s both' }}>
@@ -885,66 +884,153 @@ function Touchpoints() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   METHODOLOGY
+   PARTNERS  —  شركاء النجاح
 ═══════════════════════════════════════════════════════ */
-function Methodology() {
-  const steps = [
-    {
-      num: '01', title: 'تحديد نقطة الاتصال',
-      desc: 'اختيار الموقع التشغيلي وتحديد نطاق التحليل الجغرافي والزمني.',
-      svg: <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="9" stroke={C.bronze} strokeWidth="1.4" fill="none" /><circle cx="14" cy="14" r="4.5" fill={C.bronze} fillOpacity=".28" /><circle cx="14" cy="14" r="1.8" fill={C.bronze} /><line x1="14" y1="3" x2="14" y2="7" stroke={C.bronze} strokeWidth="1.5" strokeLinecap="round" /><line x1="14" y1="21" x2="14" y2="25" stroke={C.bronze} strokeWidth="1.5" strokeLinecap="round" /><line x1="3" y1="14" x2="7" y2="14" stroke={C.bronze} strokeWidth="1.5" strokeLinecap="round" /><line x1="21" y1="14" x2="25" y2="14" stroke={C.bronze} strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    },
-    {
-      num: '02', title: 'إدخال البيانات',
-      desc: 'ربط البيانات التشغيلية والمعايير الآمنة المعتمدة من الجهات المختصة.',
-      svg: <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="5" y="5" width="18" height="18" rx="3" stroke={C.green} strokeWidth="1.4" fill="none" /><line x1="9" y1="11" x2="19" y2="11" stroke={C.green} strokeWidth="1.4" strokeLinecap="round" /><line x1="9" y1="15" x2="16" y2="15" stroke={C.green} strokeWidth="1.4" strokeLinecap="round" /><line x1="9" y1="19" x2="13" y2="19" stroke={C.green} strokeWidth="1.4" strokeLinecap="round" /><circle cx="22" cy="22" r="4.5" fill={C.green} /><line x1="20" y1="22" x2="24" y2="22" stroke="white" strokeWidth="1.5" strokeLinecap="round" /><line x1="22" y1="20" x2="22" y2="24" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    },
-    {
-      num: '03', title: 'عرض التحليل',
-      desc: 'توليد تصورات تفاعلية ومؤشرات فورية تدعم القرار التشغيلي.',
-      svg: <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="5" width="22" height="14" rx="3" stroke={C.bronzeXL} strokeWidth="1.4" fill="none" /><path d="M7 16 L10 11 L14 14 L18 8 L21 12" stroke={C.bronzeXL} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" /><line x1="11" y1="19" x2="17" y2="19" stroke={C.bronzeXL} strokeWidth="2" strokeLinecap="round" /><line x1="14" y1="19" x2="14" y2="23" stroke={C.bronzeXL} strokeWidth="1.5" strokeLinecap="round" /><line x1="9" y1="23" x2="19" y2="23" stroke={C.bronzeXL} strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    },
-  ]
+const PARTNER_LOGOS = [
+  { src: '/logos/hajj.svg', alt: 'وزارة الحج والعمرة' },
+  { src: '/logos/moh.svg', alt: 'وزارة الصحة' },
+  { src: '/logos/mot.svg', alt: 'وزارة النقل والخدمات اللوجستية' },
+  { src: '/logos/mofa.svg', alt: 'وزارة الخارجية' },
+  { src: '/logos/tourism.svg', alt: 'وزارة السياحة' },
+  { src: '/logos/mcit.svg', alt: 'وزارة الاتصالات وتقنية المعلومات' },
+  { src: '/logos/nwc.svg', alt: 'شركة المياه الوطنية' },
+  { src: '/logos/rca-makkah.svg', alt: 'الهيئة الملكية لمدينة مكة المكرمة' },
+  { src: '/logos/mda.svg', alt: 'هيئة تطوير منطقة المدينة المنورة' },
+  { src: '/logos/saudi-electricity.png', alt: 'السعودية للطاقة' },
+  { src: '/logos/gaca.png', alt: 'الهيئة العامة للطيران المدني' },
+  { src: '/logos/pep.svg', alt: 'برنامج خدمة ضيوف الرحمن' },
+]
+
+const PARTNERS_STYLE_ID = 'partners-grid-styles'
+function injectPartnersStyles() {
+  if (document.getElementById(PARTNERS_STYLE_ID)) return
+  const s = document.createElement('style')
+  s.id = PARTNERS_STYLE_ID
+  s.textContent = `
+    .cl-partners-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .cl-partner-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 20px;
+      opacity: 0;
+      transform: translateY(24px) scale(0.9);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .cl-partner-item.cl-partner-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .cl-partner-item img {
+      max-height: 64px;
+      max-width: 140px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      filter: brightness(1.6) saturate(0.15);
+      opacity: 0.55;
+      transition: filter 0.35s ease, opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .cl-partner-item:hover img {
+      filter: brightness(1.8) saturate(0.4);
+      opacity: 1;
+      transform: scale(1.18);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) {
+      .cl-partners-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .cl-partners-grid {
+        grid-template-columns: repeat(3, 1fr);
+        padding: 0 16px;
+      }
+      .cl-partner-item {
+        padding: 18px 10px;
+      }
+      .cl-partner-item img {
+        max-height: 48px;
+        max-width: 100px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .cl-partners-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  `
+  document.head.appendChild(s)
+}
+
+function PartnerLogo({ logo, index }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          // stagger: each logo gets a small delay based on its index
+          setTimeout(() => setVisible(true), index * 80)
+          obs.disconnect()
+        }
+      },
+      { threshold: 0.15 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [index])
 
   return (
-    <section style={{ background: C.charcoalD, padding: '82px 24px' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <div className="cl-reveal cl-method-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+    <div
+      ref={ref}
+      className={`cl-partner-item${visible ? ' cl-partner-visible' : ''}`}
+      title={logo.alt}
+    >
+      <img src={logo.src} alt={logo.alt} loading="lazy" draggable="false" />
+    </div>
+  )
+}
 
-          {/* Text */}
-          <div>
-            <div style={{ fontSize: 11, color: C.bronze, letterSpacing: 3, fontWeight: 600, textTransform: 'uppercase', marginBottom: 14 }}>المنهجية</div>
-            <h2 style={{ fontSize: 'clamp(20px,3.2vw,32px)', fontWeight: 900, color: C.cream, lineHeight: 1.35, marginBottom: 20 }}>
-              منهجية علمية<br /><span style={{ color: C.bronzeXL }}>معتمدة رسمياً</span>
-            </h2>
-            <p style={{ fontSize: 13.5, color: C.grayL, lineHeight: 2, marginBottom: 26 }}>
-              يعتمد التحليل على افتراضات الطاقة الاستيعابية الآمنة المصدّق عليها من وزارة الحج والعمرة والجهات التشغيلية المعنية، إلى جانب معاملات تشغيلية محدّثة تعكس الواقع الفعلي لكل موسم.
-            </p>
-            <a href="#" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: C.bronze, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'gap 0.18s' }}
-              onMouseEnter={e => e.currentTarget.style.gap = '13px'}
-              onMouseLeave={e => e.currentTarget.style.gap = '8px'}>
-              اطّلع على وثيقة المنهجية الكاملة <span>←</span>
-            </a>
-          </div>
+function Methodology() {
+  useEffect(() => { injectPartnersStyles() }, [])
 
-          {/* Steps */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {steps.map((s, i) => (
-              <div key={i} className="cl-step" style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '16px 18px', borderRadius: 12, background: 'rgba(255,255,255,0.028)', border: `1px solid rgba(255,255,255,0.065)` }}>
-                <div style={{ width: 50, height: 50, flexShrink: 0, borderRadius: 12, background: `${C.bronze}0E`, border: `1px solid ${C.bronze}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {s.svg}
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 4 }}>
-                    <span style={{ fontSize: 10, color: C.bronze, fontWeight: 800 }}>{s.num}</span>
-                    <span style={{ fontSize: 14.5, fontWeight: 800, color: C.cream }}>{s.title}</span>
-                  </div>
-                  <p style={{ fontSize: 12.5, color: C.grayL, lineHeight: 1.75, margin: 0 }}>{s.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+  return (
+    <section style={{ background: C.charcoalD, padding: '72px 0' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', paddingLeft: 24, paddingRight: 24 }}>
+        <div className="cl-reveal" style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ fontSize: 11, color: C.bronze, letterSpacing: 3, fontWeight: 600, textTransform: 'uppercase', marginBottom: 14 }}>شركاء النجاح</div>
+          <h2 style={{ fontSize: 'clamp(22px,3.8vw,36px)', fontWeight: 900, color: C.cream, lineHeight: 1.2 }}>
+            نفخر بشراكاتنا <span style={{ color: C.bronzeXL }}>الاستراتيجية</span>
+          </h2>
+          <div style={{ width: 44, height: 2.5, background: `linear-gradient(90deg,${C.bronze},transparent)`, margin: '16px auto 0', borderRadius: 2 }} />
         </div>
+      </div>
+
+      <div className="cl-partners-grid">
+        {PARTNER_LOGOS.map((logo, i) => (
+          <PartnerLogo key={logo.src} logo={logo} index={i} />
+        ))}
       </div>
     </section>
   )

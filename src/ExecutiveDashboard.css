@@ -1,0 +1,105 @@
+/* ================================================================
+   ExecutiveDashboard.css
+================================================================ */
+
+/* ── Main content wrapper ────────────────────────────────────── */
+.exec-content {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 26px 28px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .exec-content {
+    padding: 18px 14px 44px;
+    gap: 15px;
+  }
+}
+
+/* ── KPI Strip ───────────────────────────────────────────────── */
+.exec-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+}
+
+.exec-kpi-card {
+  padding: 18px 20px 16px;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  cursor: default;
+}
+
+@media (max-width: 1200px) {
+  .exec-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .exec-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .exec-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Section panels stack ────────────────────────────────────── */
+.exec-sections-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.exec-section-header {
+  transition: background 0.18s;
+}
+
+/* ── Subsection row ──────────────────────────────────────────── */
+.exec-subsec-row {
+  margin-bottom: 22px;
+}
+
+.exec-subsec-row:last-child {
+  margin-bottom: 6px;
+}
+
+/*
+  When subsections are laid out side-by-side (allSubsSmall),
+  each exec-subsec-row shrinks to fit its cards. The inline
+  style on the parent handles the flex-wrap container.
+*/
+
+/* ── Touchpoint card — auto-fill grid (large subsections) ───── */
+.exec-tp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 13px;
+}
+
+@media (max-width: 640px) {
+  .exec-tp-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+}
+
+/* ── Touchpoint card base ────────────────────────────────────── */
+.exec-tp-card {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  cursor: default;
+  /* Ensures cards in fixed-width wrappers fill the wrapper */
+  width: 100%;
+}
+
+.exec-tp-coming {
+  filter: grayscale(0.3);
+}

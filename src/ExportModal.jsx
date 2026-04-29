@@ -11,28 +11,30 @@ import { FaMosque } from 'react-icons/fa'
 
 // ─── Design tokens (mirror App.jsx exactly) ──────────────────────
 const T = {
-  bg: '#1A1819', bgM: '#272425', bgL: '#323031',
-  card: 'rgba(255,255,255,0.032)', border: 'rgba(255,255,255,0.07)',
-  bronze: '#967126', bronzeL: '#BF9534', bronzeXL: '#D4AA52',
-  green: '#007a53', greenL: '#009A65', greenXL: '#1AAE78', greenDk: '#004A33',
+  // ── Surfaces (light — mirrors App.jsx)
+  bg: '#fefefe', bgM: '#f4f2ee', bgL: '#ece8e1',
+  card: 'rgba(65,64,66,0.04)', border: 'rgba(65,64,66,0.10)',
 
-  // Emerald — supply
-  sup: '#1AAE78', supL: 'rgba(26,174,120,0.22)', supBg: 'rgba(26,174,120,0.09)',
+  // ── Gold — demand/targets (المستهدفات)
+  bronze: '#967126', bronzeL: '#b08432', bronzeXL: '#c9a048',
 
-  // Ocean — demand/targets
-  dem: '#1A97D2', demL: 'rgba(26,151,210,0.22)', demBg: 'rgba(26,151,210,0.09)',
+  // ── Emerald — supply (الطاقة الاستيعابية)
+  green: '#007a53', greenL: '#009a65', greenXL: '#1aae78', greenDk: '#005236',
 
-  // Outcome states
-  deficit: '#C86D5E', deficitL: 'rgba(200,109,94,0.22)', deficitBg: 'rgba(200,109,94,0.09)',
-  surplus: '#1AAE78', surplusL: 'rgba(26,174,120,0.22)', surplusBg: 'rgba(26,174,120,0.09)',
+  sup: '#007a53', supL: 'rgba(0,122,83,0.22)', supBg: 'rgba(0,122,83,0.08)',
+  dem: '#967126', demL: 'rgba(150,113,38,0.24)', demBg: 'rgba(150,113,38,0.08)',
 
-  // Seasons
-  ram: '#ECC84E', ramL: 'rgba(236,200,78,0.20)', ramBg: 'rgba(236,200,78,0.08)',
-  hajj: '#96721A', hajjL: 'rgba(150,114,26,0.20)', hajjBg: 'rgba(150,114,26,0.08)',
+  // ── Outcome states
+  deficit: '#b85c4e', deficitL: 'rgba(184,92,78,0.28)', deficitBg: 'rgba(184,92,78,0.08)',
+  surplus: '#007a53', surplusL: 'rgba(0,122,83,0.22)', surplusBg: 'rgba(0,122,83,0.08)',
 
-  // Text
-  txt: '#F4F1EB', txtSub: 'rgba(244,241,235,0.82)', txtDim: 'rgba(244,241,235,0.55)',
-  warn: '#D4AA52', warnBg: 'rgba(150,113,38,0.08)', warnBdr: 'rgba(212,170,82,0.3)',
+  // ── Seasons — Teal-blue (رمضان & حج)
+  ram: '#006e96', ramL: 'rgba(0,110,150,0.22)', ramBg: 'rgba(0,110,150,0.07)',
+  hajj: '#004d6a', hajjL: 'rgba(0,77,106,0.22)', hajjBg: 'rgba(0,77,106,0.07)',
+
+  // ── Text — dark on light
+  txt: '#414042', txtSub: '#75787b', txtDim: 'rgba(65,64,66,0.45)',
+  warn: '#967126', warnBg: 'rgba(150,113,38,0.08)', warnBdr: 'rgba(150,113,38,0.3)',
 }
 
 const AR_MON = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
@@ -76,7 +78,6 @@ const nowLabel = () => {
   return `${d.getDate()} ${AR_MON[d.getMonth()]} ${d.getFullYear()}`
 }
 
-const genId = () => `RPT-${Date.now().toString(36).toUpperCase()}`
 
 const LS_KEY = 'pdf_recent_exports'
 const getRecent = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) ?? [] } catch { return [] } }
@@ -197,6 +198,65 @@ function RpSvgDonut({ title, segments, legendValueSuffix = '' }) {
   )
 }
 
+// ─── Seasonal radial bar (3 concentric rings showing % deficit days per season)
+function RpSeasonalRadial({ title, segments }) {
+  // segments: [{ name, defPct, color, days }]
+  if (!segments?.length) return null
+  // Sort ascending by defPct so smallest is innermost (matches App.jsx)
+  const data = [...segments].sort((a, b) => a.defPct - b.defPct)
+
+  const CX = 72, CY = 72
+  // 3 concentric rings between innerR=20 and outerR=66
+  const innerR = 22, outerR = 66
+  const ringGap = 2
+  const ringW = (outerR - innerR - ringGap * (data.length - 1)) / data.length
+
+  const arcs = data.map((s, i) => {
+    const r = innerR + i * (ringW + ringGap) + ringW / 2
+    const C = 2 * Math.PI * r
+    const dashLen = (s.defPct / 100) * C
+    return { ...s, r, dashLen, C }
+  })
+
+  return (
+    <div className="rp-svg-donut-card">
+      <div className="rp-svg-donut-title">{title}</div>
+      <div style={{ position: 'relative', width: 144, height: 144, margin: '0 auto' }}>
+        <svg width={144} height={144} viewBox="0 0 144 144" style={{ display: 'block' }}>
+          {/* Track rings */}
+          {arcs.map((a, i) => (
+            <circle key={`bg-${i}`} cx={CX} cy={CY} r={a.r}
+              fill="none" stroke="#eef2f6" strokeWidth={ringW} />
+          ))}
+          {/* Filled arcs — start from top (rotate -90°) */}
+          {arcs.map((a, i) => (
+            <circle key={`arc-${i}`} cx={CX} cy={CY} r={a.r}
+              fill="none" stroke={a.color} strokeWidth={ringW}
+              strokeLinecap="round"
+              strokeDasharray={`${a.dashLen} ${a.C}`}
+              transform={`rotate(-90 ${CX} ${CY})`}
+              opacity={0.9} />
+          ))}
+        </svg>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 10, width: '100%' }}>
+        {segments.map(s => (
+          <div key={s.name} style={{ padding: '6px 8px', borderRadius: 7, background: `${s.color}12`, border: `1px solid ${s.color}28` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 9.5, color: '#374151', flex: 1, fontWeight: 600 }}>{s.name}</span>
+              <strong style={{ fontSize: 11, color: s.color, flexShrink: 0 }}>{s.defPct}%</strong>
+            </div>
+            {s.days > 0 && (
+              <div style={{ fontSize: 8.5, color: '#9ca3af', paddingRight: 16, textAlign: 'left' }}>{fmtFull(s.days)} يوم</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Icon wrapper for report layout (html2canvas-safe inline SVG) ─
 function RpIcon({ icon: Icon, size = 16, color, style = {} }) {
   return (
@@ -242,8 +302,8 @@ function RpDemandChart({ series }) {
   const xScale = i => cW * (1 - i / Math.max(pts.length - 1, 1))
   const yScale = v => cH - ((v - yMin) / (yMax - yMin)) * cH
 
-  const DEM_STROKE = '#1A7AB8'
-  const SUP_STROKE = '#0D9660'
+  const DEM_STROKE = '#967126'   // gold/bronze — المستهدفات (matches App.jsx T.dem)
+  const SUP_STROKE = '#007a53'   // emerald     — الطاقة الاستيعابية (matches App.jsx T.sup)
 
   const toPath = (getter) =>
     pts.map((d, i) => `${i === 0 ? 'M' : 'L'}${xScale(i).toFixed(1)},${yScale(getter(d)).toFixed(1)}`).join(' ')
@@ -381,14 +441,14 @@ function RpDemandChart({ series }) {
             <rect key={`ram-${bi}`}
               x={xLeft.toFixed(1)} y={0}
               width={width.toFixed(1)} height={cH}
-              fill="rgba(236,200,78,0.18)"
+              fill="rgba(0,110,150,0.22)"
             />
           ))}
           {hajjBands.map(({ xLeft, width }, bi) => (
             <rect key={`hajj-${bi}`}
               x={xLeft.toFixed(1)} y={0}
               width={Math.max(3, width).toFixed(1)} height={cH}
-              fill="rgba(150,114,26,0.22)"
+              fill="rgba(0,77,106,0.22)"
             />
           ))}
 
@@ -436,10 +496,9 @@ function generateInsights(payload) {
     else if (defPct > 40)
       insights.push(`تجاوز العجز اليومي ${defPct}% من مجموع الأيام المرصودة، ما يدل على تكرار واضح لفجوات الطاقة الاستيعابية مقارنة بالمستهدفات خلال الفترة.`)
     else
-      insights.push(`سُجّل عجز في ${defPct}% من الأيام خلال فترة ${yrLabel}، ما يشير إلى وجود ضغط متكرر على الطاقة الاستيعابية مقارنة بالمستهدفات وإن كان ضمن نطاق أقل حدة.`)
-
+      insights.push(`سُجّل عجز في ${defPct}% من الأيام خلال فترة ${yrLabel}، ما يشير إلى وجود ضغط مستمر على الطاقة الاستيعابية مقارنة بالمستهدفات.`)
     if (kpi.criticalPct > 50)
-      insights.push(`${kpi.criticalPct}% من الأيام تقع ضمن النطاق الحرج (المستهدفات ≥ 90% من الطاقة الاستيعابية)، ما يعكس استمرار التشغيل تحت ضغط مرتفع.`)
+      insights.push(`${kpi.criticalPct}% من الأيام تقع ضمن النطاق الحرج (المستهدفات ≥ 80% من الطاقة الاستيعابية)، ما يعكس استمرار التشغيل تحت ضغط مرتفع.`)
     else if (kpi.criticalPct > 25)
       insights.push(`${kpi.criticalPct}% من الأيام ضمن النطاق الحرج، ما يشير إلى تكرار مستويات تشغيل قريبة من الحد الأقصى للطاقة الاستيعابية.`)
 
@@ -458,7 +517,7 @@ function generateInsights(payload) {
     if (ramPct > 80)
       insights.push(`رمضان يُشكّل نقطة ضغط قصوى، مع عجز في الطاقة الاستيعابية خلال ${ramPct}% من أيامه مقارنة بـ ${outerPct}% خارجه.`)
     else if (ramPct > 50)
-      insights.push(`سُجّل عجز في الطاقة الاستيعابية خلال رمضان بنسبة ${ramPct}% مقارنة بـ ${outerPct}% خارج رمضان، ما يبرز ارتفاع الضغط الموسمي خلال هذه الفترة.`)
+      insights.push(`سُجّل عجز في الطاقة الاستيعابية خلال رمضان بنسبة ${ramPct}% مقارنة في ${outerPct}% خارج رمضان، ما يبرز ارتفاع الضغط الموسمي خلال هذه الفترة.`)
     else if (ramPct > outerPct + 10)
       insights.push(`يرتفع الضغط في رمضان بمقدار ${ramPct - outerPct} نقطة مئوية فوق المعدل خارج رمضان، ما يعكس زيادة موسمية واضحة في مستوى العجز بين المستهدفات والطاقة الاستيعابية.`)
   }
@@ -471,7 +530,7 @@ function generateInsights(payload) {
 
   const activeAdj = Object.values(sc).filter(v => v !== 0).length
   if (activeAdj > 0)
-    insights.push(`يعكس هذا التقرير ${activeAdj} تعديل(ات) افتراضية على السيناريو — النتائج تقديرية ولا تعكس البيانات الفعلية بشكل كامل.`)
+    insights.push(`يعكس هذا التقرير ${activeAdj} تعديلات افتراضية على السيناريو، النتائج تقديرية ولا تعكس البيانات الفعلية بشكل كامل.`)
 
   return insights.slice(0, 5)
 }
@@ -488,7 +547,7 @@ function generateNotes(payload) {
 }
 
 // ─── Page footer ─────────────────────────────────────────────────
-const RpPageFooter = ({ yrLabel, reportId, today }) => (
+const RpPageFooter = ({ yrLabel, today }) => (
   <div className="rp-page-footer">
     <img src="/PEP-2030.png" alt="شعار المنصة" className="rp-footer-logo" />
     <span className="rp-footer-right">
@@ -513,10 +572,100 @@ const RpPageHeader = ({ sectionLabel, title, sub }) => (
 const HijriDate = ({ hijri, className = '' }) =>
   hijri ? <span className={`rp-hijri-date ${className}`}>{hijri}</span> : null
 
+// ─── SVG Monthly Bar Chart for insights page ─────────────────────
+function RpMonthlyBarChart({ monthly }) {
+  if (!monthly?.length) return null
+
+  const W = 660, H = 130
+  const PAD = { top: 12, right: 10, bottom: 32, left: 44 }
+  const cW = W - PAD.left - PAD.right
+  const cH = H - PAD.top - PAD.bottom
+
+  const maxDef = Math.max(...monthly.map(m => m.defDays), 1)
+  const barW = Math.max(4, (cW / monthly.length) * 0.62)
+  const gap = cW / monthly.length
+
+  const yTick = v => Math.round(cH - (v / maxDef) * cH)
+
+  const yTickVals = [0, Math.round(maxDef / 2), maxDef].filter((v, i, a) => a.indexOf(v) === i)
+
+  return (
+    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px 8px', marginBottom: 14 }}>
+      <div style={{ fontSize: 10.5, fontWeight: 800, color: '#1e293b', marginBottom: 8 }}>عددأيام العجز لكل شهر</div>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', overflow: 'visible' }}>
+        <g transform={`translate(${PAD.left},${PAD.top})`}>
+          {/* Grid lines */}
+          {yTickVals.map(v => (
+            <line key={v} x1={0} y1={yTick(v)} x2={cW} y2={yTick(v)}
+              stroke="#e5e7eb" strokeWidth="0.8" strokeDasharray="3 3" />
+          ))}
+          <line x1={0} y1={cH} x2={cW} y2={cH} stroke="#cbd5e1" strokeWidth="1" />
+
+          {/* Bars */}
+          {monthly.map((m, i) => {
+            const x = i * gap + (gap - barW) / 2
+            const barH = Math.max(2, (m.defDays / maxDef) * cH)
+            const y = cH - barH
+            const isRam = m.isRam
+            const isHajj = m.isHajj
+            const barColor = isRam ? '#006e96' : isHajj ? '#004d6a' : m.defDays > 0 ? '#b85c4e' : '#cbd5e1'
+            const barBg = isRam ? 'rgba(107,143,0,0.10)' : isHajj ? 'rgba(74,100,0,0.10)' : 'transparent'
+            return (
+              <g key={i}>
+                {/* Season highlight column */}
+                {(isRam || isHajj) && (
+                  <rect x={i * gap} y={0} width={gap} height={cH}
+                    fill={barBg} rx={0} />
+                )}
+                {/* Bar */}
+                <rect x={x} y={y} width={barW} height={barH}
+                  fill={barColor} rx={3} opacity={0.88} />
+                {/* Value label above bar */}
+                {m.defDays > 0 && (
+                  <text x={x + barW / 2} y={y - 3}
+                    textAnchor="middle" fontSize="8" fontWeight="700"
+                    fill={barColor} fontFamily="Cairo, sans-serif">
+                    {m.defDays}
+                  </text>
+                )}
+                {/* X-axis label: M/YY (e.g., 2/26) — rotated vertical */}
+                <text
+                  x={i * gap + gap / 2}
+                  y={cH + 26}
+                  textAnchor="end"
+                  dy="0.32em"
+                  fontSize="8.5"
+                  fill="#6b7280"
+                  fontFamily="Cairo, sans-serif"
+                  transform={`rotate(-90 ${i * gap + gap / 2} ${cH + 26})`}
+                >
+                  {`${(m.mo ?? 0) + 1}/${String(m.yr ?? '').slice(-2)}`}
+                </text>
+              </g>
+            )
+          })}
+
+          {/* Y-axis labels */}
+          {yTickVals.map(v => (
+            <text key={`yt-${v}`} x={-6} y={yTick(v) + 3.5}
+              textAnchor="end" fontSize="8" fill="#9ca3af"
+              fontFamily="Cairo, sans-serif">{v}</text>
+          ))}
+        </g>
+      </svg>
+      <div style={{ display: 'flex', gap: 12, fontSize: 8.5, color: '#6b7280', marginTop: 4, flexWrap: 'wrap' }}>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#b85c4e', marginLeft: 4, verticalAlign: 'middle' }} />أيام عجز</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#006e96', marginLeft: 4, verticalAlign: 'middle' }} />رمضان</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#004d6a', marginLeft: 4, verticalAlign: 'middle' }} />حج</span>
+      </div>
+    </div>
+  )
+}
+
 // ════════════════════════════════════════════════════════════════
 //  REPORT LAYOUT (hidden div that gets captured)
 // ════════════════════════════════════════════════════════════════
-function ReportLayout({ payload, reportId, opts }) {
+function ReportLayout({ payload, opts }) {
   const {
     yr, kpi, ram, sc, peakDemand, peakSupply, series, monthly,
     seriesYears, demTypeLabel, supTypeLabel, scopeLabel, demTypes, supTypes,
@@ -527,12 +676,12 @@ function ReportLayout({ payload, reportId, opts }) {
   const today = nowLabel()
   const yrLabel = yr ?? (seriesYears?.length ? seriesYears.join('–') : '—')
 
-  // ── Recompute day categories with 80%/95% thresholds ──────────
+  // ── Recompute day categories with 80%/100% thresholds ──────────
   const dayBreakdown = series.length > 0 ? (() => {
     let defDays = 0, critDays = 0, surDays = 0
     series.forEach(r => {
       const ratio = r.supply > 0 ? (r.demand ?? 0) / r.supply : 0
-      if (ratio > 0.95) defDays++
+      if (ratio > 1.0) defDays++
       else if (ratio >= 0.80) critDays++
       else surDays++
     })
@@ -590,25 +739,82 @@ function ReportLayout({ payload, reportId, opts }) {
 
           {/* المصطلحات + مؤشرات الرسم البياني — unified single table */}
           <div className="rp-term-list">
-            {/* ── Term definitions ── */}
+            {/* ── الطاقة الاستيعابية (parent + children) ── */}
+            <div className="rp-term-row" style={{ background: 'rgba(0,122,83,0.05)', borderRight: '3px solid #007a53' }}>
+              <div className="rp-term-row-name" style={{ color: '#007a53', fontWeight: 900, borderRight: 'none' }}>
+                <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#007a53', marginLeft: 6, flexShrink: 0, verticalAlign: 'middle' }} />
+                الطاقة الاستيعابية
+              </div>
+              <div className="rp-term-row-body"><span className="rp-term-row-simple">إجمالي السعة المتاحة للإيواء — تشمل ثلاثة مكوّنات</span></div>
+            </div>
             {[
-              { term: 'أيام العجز', accent: null, simple: 'عدد الأيام التي تجاوزت فيها المستهدفات الطاقة الاستيعابية' },
+              { term: 'المرافق المرخصة', simple: 'الفنادق والشقق الفندقية المشغّلة حالياً' },
+              { term: 'المشاريع المستقبلية', simple: 'المنشآت الفندقية قيد التطوير أو المخطط لها' },
+              { term: 'مساكن الحجاج', simple: 'وحدات الإيواء المخصصة لموسم الحج' },
+            ].map(({ term, simple }) => (
+              <div key={term} className="rp-term-row" style={{ paddingRight: 22 }}>
+                <div className="rp-term-row-name" style={{ color: '#374151', borderRight: 'none' }}>
+                  <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: '#007a53', marginLeft: 6, opacity: 0.5, flexShrink: 0, verticalAlign: 'middle' }} />
+                  {term}
+                </div>
+                <div className="rp-term-row-body"><span className="rp-term-row-simple">{simple}</span></div>
+              </div>
+            ))}
+
+            {/* ── المستهدفات (parent + children) ── */}
+            <div className="rp-term-row" style={{ background: 'rgba(150,113,38,0.05)', borderRight: '3px solid #967126', marginTop: 6 }}>
+              <div className="rp-term-row-name" style={{ color: '#967126', fontWeight: 900, borderRight: 'none' }}>
+                <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#967126', marginLeft: 6, flexShrink: 0, verticalAlign: 'middle' }} />
+                المستهدفات
+              </div>
+              <div className="rp-term-row-body"><span className="rp-term-row-simple">إجمالي الطلب المتوقع على الإيواء — يتكوّن من نوعين</span></div>
+            </div>
+            {[
+              { term: 'معتمري الداخل (مبيت)', simple: 'المعتمرون المقيمون داخل المملكة الذين يبيتون ليلة أو أكثر' },
+              { term: 'معتمري الخارج', simple: 'المعتمرون القادمون من خارج المملكة' },
+            ].map(({ term, simple }) => (
+              <div key={term} className="rp-term-row" style={{ paddingRight: 22 }}>
+                <div className="rp-term-row-name" style={{ color: '#374151', borderRight: 'none' }}>
+                  <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: '#967126', marginLeft: 6, opacity: 0.5, flexShrink: 0, verticalAlign: 'middle' }} />
+                  {term}
+                </div>
+                <div className="rp-term-row-body"><span className="rp-term-row-simple">{simple}</span></div>
+              </div>
+            ))}
+
+            {/* ── الفجوة (parent + children) ── */}
+            <div className="rp-term-row" style={{ background: 'rgba(212,170,82,0.06)', borderRight: '3px solid rgba(212,170,82,0.7)', marginTop: 6 }}>
+              <div className="rp-term-row-name" style={{ color: 'rgba(160,130,60,0.9)', fontWeight: 900, borderRight: 'none' }}>
+                <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: 'rgba(212,170,82,0.7)', marginLeft: 6, flexShrink: 0, verticalAlign: 'middle' }} />
+                الفجوة
+              </div>
+              <div className="rp-term-row-body"><span className="rp-term-row-simple">الفرق بين الطاقة الاستيعابية والمستهدفات — تظهر في حالتين</span></div>
+            </div>
+            {[
+              { term: 'العجز', accent: '#b85c4e', simple: 'المستهدفات تتجاوز الطاقة الاستيعابية المتاحة' },
+              { term: 'الفائض', accent: '#007a53', simple: 'الطاقة الاستيعابية تتجاوز المستهدفات' },
+            ].map(({ term, accent, simple }) => (
+              <div key={term} className="rp-term-row" style={{ paddingRight: 22 }}>
+                <div className="rp-term-row-name" style={{ color: '#374151', borderRight: 'none' }}>
+                  <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: accent, marginLeft: 6, flexShrink: 0, verticalAlign: 'middle' }} />
+                  {term}
+                </div>
+                <div className="rp-term-row-body"><span className="rp-term-row-simple">{simple}</span></div>
+              </div>
+            ))}
+
+            {/* ── Other standalone terms ── */}
+            {[
+              { term: 'أيام العجز', accent: '#b85c4e', simple: 'عندما تكون المستهدفات أكبر من ١٠٠٪ من الطاقة الاستيعابية' },
               { term: 'ذروة المستهدفات', accent: null, simple: 'أعلى قيمة يومية وصلت إليها المستهدفات خلال الفترة' },
-              { term: 'الطاقة الاستيعابية', accent: '#0D9660', simple: 'الحد الأقصى للأسرّة المتاحة يومياً ضمن المنظومة' },
-              { term: 'العجز', accent: '#C86D5E', simple: 'حالة تتجاوز فيها المستهدفات الطاقة الاستيعابية' },
-              { term: 'الفائض', accent: '#1AAE78', simple: 'حالة تتجاوز فيها الطاقة الاستيعابية مستوى المستهدفات' },
-              { term: 'الفجوة', accent: null, simple: 'الفرق بين المستهدفات والطاقة الاستيعابية' },
-              { term: 'المستهدفات', accent: '#1A7AB8', simple: 'عدد الزوار المتوقع يومياً وفق الخطط المعتمدة' },
               { term: 'نسبة الإشغال', accent: null, simple: 'نسبة المستهدفات إلى إجمالي الطاقة الاستيعابية' },
-            ].map(({ term, accent, simple, detail }) => (
-              <div key={term} className="rp-term-row">
+            ].map(({ term, accent, simple }) => (
+              <div key={term} className="rp-term-row" style={{ marginTop: term === 'أيام العجز' ? 6 : 0 }}>
                 <div className="rp-term-row-name" style={{ color: '#374151', borderRight: 'none' }}>
                   <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: accent ?? '#6B7280', marginLeft: 6, flexShrink: 0, verticalAlign: 'middle' }} />
                   {term}
                 </div>
-                <div className="rp-term-row-body">
-                  <span className="rp-term-row-simple">{simple}</span>
-                </div>
+                <div className="rp-term-row-body"><span className="rp-term-row-simple">{simple}</span></div>
               </div>
             ))}
 
@@ -619,9 +825,9 @@ function ReportLayout({ payload, reportId, opts }) {
               { label: 'أعلى عجز', desc: 'أعلى عجز يومي متوقع خلال الفترة المحددة' },
               { label: 'أعلى فائض', desc: 'أعلى فائض يومي في الطاقة الاستيعابية خلال الفترة المحددة' },
               { label: 'متوسط الفجوة اليومية', desc: 'متوسط الفرق اليومي بين الطلب والطاقة — يعكس الضغط العام على المنظومة طوال الفترة' },
-              { label: 'رمضان', desc: 'تُظلَّل فترة رمضان على الرسم البياني بلون ذهبي' },
-              { label: 'موسم الحج', desc: 'تُظلَّل فترة الحج على الرسم البياني بلون بني داكن' },
-            ].map(({ color, label, desc }) => (
+              { label: 'رمضان', desc: 'تُظلَّل فترة رمضان على الرسم البياني' },
+              { label: 'موسم الحج', desc: 'تُظلَّل فترة الحج على الرسم البياني' },
+            ].map(({ label, desc }) => (
               <div key={label} className="rp-term-row">
                 <div className="rp-term-row-name" style={{ color: '#374151', borderRight: 'none' }}>
                   <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#6B7280', marginLeft: 6, flexShrink: 0, verticalAlign: 'middle' }} />
@@ -634,7 +840,7 @@ function ReportLayout({ payload, reportId, opts }) {
             ))}
           </div>
 
-          <RpPageFooter yrLabel={yrLabel} reportId={reportId} today={today} />
+          <RpPageFooter yrLabel={yrLabel} today={today} />
         </div>
       )}
 
@@ -663,7 +869,7 @@ function ReportLayout({ payload, reportId, opts }) {
             </div>
             <div className="rp-crb-sep" />
             <div className="rp-crb-cell">
-              <div className="rp-crb-lbl">نوع الطاقة</div>
+              <div className="rp-crb-lbl">نوع الطاقة الاستيعابية</div>
               <div className="rp-crb-val" style={{ whiteSpace: 'pre-line' }}>{supTypeLabel}</div>
             </div>
             <div className="rp-crb-sep" />
@@ -684,7 +890,7 @@ function ReportLayout({ payload, reportId, opts }) {
             {/* أعلى حمل يومي */}
             <div className="rp-peak-card rp-peak-card--dem">
               <div className="rp-peak-label">أعلى حمل يومي</div>
-              <div className="rp-peak-val" style={{ color: '#1A7AB8' }}>
+              <div className="rp-peak-val" style={{ color: '#967126' }}>
                 {peakDemand ? fmtFull(peakDemand.value) : '—'}
                 <span className="rp-peak-unit">معتمر/يوم</span>
               </div>
@@ -694,7 +900,7 @@ function ReportLayout({ payload, reportId, opts }) {
             {/* أعلى طاقة استيعابية */}
             <div className="rp-peak-card rp-peak-card--sup">
               <div className="rp-peak-label">أعلى طاقة استيعابية</div>
-              <div className="rp-peak-val" style={{ color: '#0D9660' }}>
+              <div className="rp-peak-val" style={{ color: '#007a53' }}>
                 {peakSupply ? fmtFull(peakSupply.value) : '—'}
                 <span className="rp-peak-unit">سرير/يوم</span>
               </div>
@@ -709,7 +915,7 @@ function ReportLayout({ payload, reportId, opts }) {
               return (
                 <div className={`rp-peak-card ${hasDef ? 'rp-peak-card--deficit' : 'rp-peak-card--empty'}`}>
                   <div className="rp-peak-label">أعلى عجز</div>
-                  <div className="rp-peak-val" style={{ color: hasDef ? '#C86D5E' : '#9ca3af' }}>
+                  <div className="rp-peak-val" style={{ color: hasDef ? '#b85c4e' : '#9ca3af' }}>
                     {hasDef ? fmtFull(defVal) : '—'}
                     {hasDef && <span className="rp-peak-unit">سرير/يوم</span>}
                   </div>
@@ -726,7 +932,7 @@ function ReportLayout({ payload, reportId, opts }) {
               return (
                 <div className={`rp-peak-card ${hasSur ? 'rp-peak-card--surplus' : 'rp-peak-card--empty'}`}>
                   <div className="rp-peak-label">أعلى فائض</div>
-                  <div className="rp-peak-val" style={{ color: hasSur ? '#1AAE78' : '#9ca3af' }}>
+                  <div className="rp-peak-val" style={{ color: hasSur ? '#007a53' : '#9ca3af' }}>
                     {hasSur ? fmtFull(surVal) : '—'}
                     {hasSur && <span className="rp-peak-unit">سرير/يوم</span>}
                   </div>
@@ -742,21 +948,21 @@ function ReportLayout({ payload, reportId, opts }) {
               label="متوسط الطاقة الاستيعابية اليومية"
               value={fmtN(kpi.avgS)}
               unit="سرير / يوم"
-              valueColor="#0D9660"
+              valueColor="#007a53"
               accentClass="sup"
             />
             <RpKpi
               label="متوسط المستهدفات اليومية"
               value={fmtN(kpi.avgD)}
               unit="معتمر / يوم"
-              valueColor="#1A7AB8"
+              valueColor="#967126"
               accentClass="dem"
             />
             <RpKpi
               label="متوسط الفجوة اليومية"
               value={fmtN(Math.abs(kpi.avgG))}
               unit="سرير / يوم"
-              valueColor={kpi.avgG > 0 ? '#0D9660' : '#C86D5E'}
+              valueColor={kpi.avgG > 0 ? '#007a53' : '#b85c4e'}
               accentClass={kpi.avgG > 0 ? 'surplus' : 'deficit'}
             />
           </div>
@@ -766,17 +972,28 @@ function ReportLayout({ payload, reportId, opts }) {
             const defDays = series.filter(r => r.demand && r.supply && r.gap < 0).length
             const surDays = series.filter(r => r.demand && r.supply && r.gap >= 0).length
             const donutDef = [
-              { name: 'عجز', value: defDays, color: '#C86D5E' },
-              { name: 'فائض', value: surDays, color: '#1AAE78' },
+              { name: 'عجز', value: defDays, color: '#b85c4e' },
+              { name: 'فائض', value: surDays, color: '#007a53' },
             ]
             // Demand split: outside vs inside from series ado/adi (mirrors App.jsx mini chart 4)
             const validRows = series.filter(r => r.demand && r.supply)
             const avgOut = validRows.length ? validRows.reduce((s, r) => s + (r.ado ?? 0), 0) / validRows.length : 0
             const avgIn = validRows.length ? validRows.reduce((s, r) => s + (r.adi ?? 0), 0) / validRows.length : 0
-            const donutDemSplit = [
-              { name: 'معتمري الخارج', value: Math.round(avgOut), color: '#1A97D2' },
-              { name: 'معتمري الداخل (مبيت)', value: Math.round(avgIn), color: '#80C6E6' },
-            ].filter(d => d.value > 0)
+            // Seasonal: % deficit days per season (mirrors App.jsx SeasonalRadialBar)
+            const seasonsDef = [
+              { name: 'رمضان', filter: r => r.isRamadan, color: '#006e96' },
+              { name: 'حج', filter: r => r.isHajj, color: '#004d6a' },
+              { name: 'باقي أيام السنة', filter: r => !r.isRamadan && !r.isHajj, color: '#75787b' },
+            ]
+            const seasonalSeg = seasonsDef.map(s => {
+              const rows = series.filter(r => s.filter(r) && r.demand && r.supply)
+              return {
+                name: s.name,
+                defPct: rows.length ? Math.round(rows.filter(r => r.gap < 0).length / rows.length * 100) : 0,
+                color: s.color,
+                days: rows.length,
+              }
+            }).filter(s => s.days > 0)
             // Coverage %: supply / demand × 100 (mirrors App.jsx line 2510)
             const fillPct = kpi.avgD > 0 ? Math.round(kpi.avgS / kpi.avgD * 100) : 0
             const isDeficit = fillPct < 100
@@ -789,12 +1006,11 @@ function ReportLayout({ payload, reportId, opts }) {
                   legendValueSuffix="يوم"
                 />
 
-                {/* Donut 2: الفئات من المستهدفات — خارج vs داخل */}
-                {donutDemSplit.length > 0 && (
-                  <RpSvgDonut
-                    title="الفئات من المستهدفات"
-                    segments={donutDemSplit}
-                    legendValueSuffix="معتمر/يوم"
+                {/* Chart 2: حالات العجز حسب الموسم */}
+                {seasonalSeg.length > 0 && (
+                  <RpSeasonalRadial
+                    title="حالات العجز حسب الموسم"
+                    segments={seasonalSeg}
                   />
                 )}
 
@@ -803,14 +1019,14 @@ function ReportLayout({ payload, reportId, opts }) {
                   <div className="rp-svg-donut-title">نسبة تغطية المستهدفات</div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, flex: 1, justifyContent: 'center' }}>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 52, fontWeight: 900, color: isDeficit ? '#C86D5E' : '#1AAE78', lineHeight: 1 }}>{fillPct}%</div>
+                      <div style={{ fontSize: 52, fontWeight: 900, color: isDeficit ? '#b85c4e' : '#007a53', lineHeight: 1 }}>{fillPct}%</div>
                       <div style={{ fontSize: 10, color: '#6b7280', marginTop: 6 }}>نسبة ما تغطيه الطاقة الإستيعابية من إجمالي الطلب</div>
                     </div>
                     <div style={{ width: '100%', height: 12, borderRadius: 10, background: '#f1f5f9', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', borderRadius: 10, width: `${Math.min(fillPct, 100)}%`, background: isDeficit ? 'linear-gradient(to left,#C86D5E,#C86D5E88)' : 'linear-gradient(to left,#1AAE78,#1AAE7888)', transition: 'width .6s ease' }} />
+                      <div style={{ height: '100%', borderRadius: 10, width: `${Math.min(fillPct, 100)}%`, background: isDeficit ? 'linear-gradient(to left,#b85c4e,#b85c4e88)' : 'linear-gradient(to left,#007a53,#007a5388)', transition: 'width .6s ease' }} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span style={{ fontSize: 12, fontWeight: 900, color: isDeficit ? '#b91c1c' : '#065f46' }}>
+                      <span style={{ fontSize: 12, fontWeight: 900, color: isDeficit ? '#b85c4e' : '#007a53' }}>
                         {isDeficit ? 'عجز' : 'فائض'}
                       </span>
                       <span style={{ fontSize: 10, color: '#374151', fontWeight: 700 }}>
@@ -826,7 +1042,113 @@ function ReportLayout({ payload, reportId, opts }) {
           {/* Demand vs Supply chart */}
           <RpDemandChart series={series} />
 
-          <RpPageFooter yrLabel={yrLabel} reportId={reportId} today={today} />
+          <RpPageFooter yrLabel={yrLabel} today={today} />
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          PAGE 2b — الاستنتاجات والتحليل (right after الملخص التنفيذي)
+      ══════════════════════════════════════════════════════════ */}
+      {opts.insights && (
+        <div className="rp-page rp-page-content">
+          <RpPageHeader
+            sectionLabel="القسم الثاني"
+            title="الاستنتاجات والتحليل"
+            sub={`رؤى تحليلية مبنية على بيانات ${yrLabel} · ${today}`}
+          />
+
+          {/* ── 3-col KPI Summary ── */}
+          {kpi && dayBreakdown && (
+            <div className="rp-kpi-peak-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)', marginBottom: 5 }}>
+              <div className="rp-peak-card rp-peak-card--dem">
+                <div className="rp-peak-label">أيام العجز الكلية</div>
+                <div className="rp-peak-val" style={{ color: '#b85c4e' }}>
+                  {dayBreakdown.defDays}
+                  <span className="rp-peak-unit">يوم</span>
+                </div>
+                <div className="rp-peak-date" style={{ color: '#b85c4e', fontWeight: 700 }}>{dayBreakdown.defPct}% من إجمالي الفترة</div>
+              </div>
+              <div className="rp-peak-card rp-peak-card--empty" style={{ opacity: 1, borderColor: '#e2e8f0' }}>
+                <div className="rp-peak-label">الأيام الحرجة</div>
+                <div className="rp-peak-val" style={{ color: '#967126' }}>
+                  {dayBreakdown.critDays}
+                  <span className="rp-peak-unit">يوم</span>
+                </div>
+                <div className="rp-peak-date" style={{ color: '#967126', fontWeight: 700 }}>{dayBreakdown.critPct}% من إجمالي الفترة</div>
+              </div>
+              <div className="rp-peak-card rp-peak-card--surplus">
+                <div className="rp-peak-label">أيام الفائض</div>
+                <div className="rp-peak-val" style={{ color: '#007a53' }}>
+                  {dayBreakdown.surDays}
+                  <span className="rp-peak-unit">يوم</span>
+                </div>
+                <div className="rp-peak-date" style={{ color: '#007a53', fontWeight: 700 }}>{dayBreakdown.surPct}% من إجمالي الفترة</div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Legend: day type definitions ── */}
+          {kpi && dayBreakdown && (
+            <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+              {[
+                { color: '#b85c4e', bg: 'rgba(184,92,78,0.08)', border: 'rgba(184,92,78,0.22)', label: 'أيام العجز', desc: 'المستهدفات أكبر من 100% من الطاقة' },
+                { color: '#967126', bg: 'rgba(150,113,38,0.08)', border: 'rgba(150,113,38,0.22)', label: 'الأيام الحرجة', desc: 'المستهدفات بين 80%-100% من الطاقة' },
+                { color: '#007a53', bg: 'rgba(0,122,83,0.08)', border: 'rgba(0,122,83,0.22)', label: 'أيام الفائض', desc: 'المستهدفات < 80% من الطاقة' },
+              ].map(d => (
+                <div key={d.label} style={{ flex: 1, background: d.bg, border: `1px solid ${d.border}`, borderRadius: 8, padding: '8px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 10, fontWeight: 800, color: d.color }}>{d.label}</span>
+                  </div>
+                  <div style={{ fontSize: 9, color: '#6b7280' }}>{d.desc}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Monthly deficit bar chart ── */}
+          {monthly?.length > 0 && <RpMonthlyBarChart monthly={monthly} />}
+
+          {/* ── Mini chart: الفئات من المستهدفات (خارج vs داخل) ── */}
+          {kpi && (() => {
+            const validRows = series.filter(r => r.demand)
+            const avgOut = validRows.length ? validRows.reduce((s, r) => s + (r.ado ?? 0), 0) / validRows.length : 0
+            const avgIn = validRows.length ? validRows.reduce((s, r) => s + (r.adi ?? 0), 0) / validRows.length : 0
+            const donutDemSplit = [
+              { name: 'معتمري الخارج', value: Math.round(avgOut), color: '#7a5a1e' },
+              { name: 'معتمري الداخل (مبيت)', value: Math.round(avgIn), color: '#d4a843' },
+            ].filter(d => d.value > 0)
+            if (!donutDemSplit.length) return null
+            return (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+                <div style={{ width: '52%' }}>
+                  <RpSvgDonut
+                    title="الفئات من المستهدفات"
+                    segments={donutDemSplit}
+                    legendValueSuffix="معتمر/يوم"
+                  />
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* ── Text insights (numbered) ── */}
+          <div className="rp-insights-box">
+            <div className="rp-insights-hdr">
+              <span className="rp-insights-dot" />
+              أبرز النتائج التحليلية
+            </div>
+            {insights.map((ins, i) => (
+              <div key={i} className="rp-insight-row">
+                <div className="rp-insight-num">{i + 1}</div>
+                <div className="rp-insight-body">
+                  <p className="rp-insight-txt">{ins}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <RpPageFooter yrLabel={yrLabel} today={today} />
         </div>
       )}
 
@@ -844,7 +1166,7 @@ function ReportLayout({ payload, reportId, opts }) {
           {/* Ramadan summary */}
           <div className="rp-ram-summary">
             <div className="rp-ram-summary-title">
-              <RpIcon icon={FiMoon} size={13} color="#96721A" style={{ marginLeft: 6 }} />
+              <RpIcon icon={FiMoon} size={13} color="#006e96" style={{ marginLeft: 6 }} />
               تحليل رمضان — {yrLabel}
               {ramHijriLabel && <span className="rp-ram-hijri-year">{ramHijriLabel}</span>}
             </div>
@@ -886,7 +1208,11 @@ function ReportLayout({ payload, reportId, opts }) {
                       </span>
                       <span className="rp-rpr-range">{p.dateRange}</span>
                       <span className="rp-rpr-days">{p.days} يوم</span>
-                      <span className={`rp-rpr-pct ${Math.round(p.pct) > 50 ? 'dem' : 'sup'}`}>عجز {Math.round(p.pct)}%</span>
+                      <span className={`rp-rpr-pct ${Math.round(p.pct) > 0 ? 'dem' : 'sup'}`}>
+                        {Math.round(p.pct) === 0
+                          ? '✓ لا يوجد عجز'
+                          : `⚠ عجز في ${Math.round(p.pct)}% من الأيام`}
+                      </span>
                       <span className="rp-rpr-avg">متوسط {fmtFull(p.avg)} سرير/يوم</span>
                     </div>
                   )
@@ -907,10 +1233,12 @@ function ReportLayout({ payload, reportId, opts }) {
                     <div className="rp-other-months-title">تحليل باقي الأشهر</div>
                     <div className="rp-other-months-sub">الفترات خارج موسمَي رمضان والحج</div>
                   </div>
-                  <div className={`rp-other-status-pill ${Math.round(ram.oPct) < 30 ? 'sup' : 'dem'}`}>
-                    {Math.round(ram.oPct) < 30
-                      ? `✓ عجز في أقل من ${Math.round(ram.oPct)}% من الأيام`
-                      : `⚠ عجز في ${Math.round(ram.oPct)}% من الأيام`}
+                  <div className={`rp-other-status-pill ${Math.round(ram.oPct) === 0 ? 'sup' : Math.round(ram.oPct) < 30 ? 'sup' : 'dem'}`}>
+                    {Math.round(ram.oPct) === 0
+                      ? '✓ لا يوجد عجز'
+                      : Math.round(ram.oPct) < 30
+                        ? `✓ عجز في أقل من ${Math.round(ram.oPct)}% من الأيام`
+                        : `⚠ عجز في ${Math.round(ram.oPct)}% من الأيام`}
                   </div>
                 </div>
 
@@ -949,7 +1277,7 @@ function ReportLayout({ payload, reportId, opts }) {
             )
           })()}
 
-          <RpPageFooter yrLabel={yrLabel} reportId={reportId} today={today} />
+          <RpPageFooter yrLabel={yrLabel} today={today} />
         </div>
       )}
 
@@ -983,14 +1311,14 @@ function ReportLayout({ payload, reportId, opts }) {
                     <td className="rp-td-month">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         {m.name}
-                        {m.isRam && <RpIcon icon={FiMoon} size={11} color="#96721A" />}
-                        {m.isHajj && <RpIcon icon={FaMosque} size={11} color="#96721A" />}
+                        {m.isRam && <RpIcon icon={FiMoon} size={11} color="#006e96" />}
+                        {m.isHajj && <RpIcon icon={FaMosque} size={11} color="#006e96" />}
                       </span>
                     </td>
                     <td className="rp-td-dem rp-td-num">{fmtFull(m.avgDem)}</td>
                     <td className="rp-td-sup rp-td-num">{fmtFull(m.avgSup)}</td>
                     <td className="rp-td-num">
-                      <span style={{ color: isDeficit ? '#C86D5E' : '#007a53', fontWeight: 700 }}>
+                      <span style={{ color: isDeficit ? '#b85c4e' : '#007a53', fontWeight: 700 }}>
                         {fmtFull(m.avgGap)}
                       </span>
                     </td>
@@ -1016,7 +1344,7 @@ function ReportLayout({ payload, reportId, opts }) {
                   <td className="rp-td-dem rp-td-num"><strong>{fmtN(kpi.avgD)}</strong></td>
                   <td className="rp-td-sup rp-td-num"><strong>{fmtN(kpi.avgS)}</strong></td>
                   <td className="rp-td-num">
-                    <span style={{ color: kpi.avgG > 0 ? '#C86D5E' : '#007a53', fontWeight: 700 }}>
+                    <span style={{ color: kpi.avgG > 0 ? '#b85c4e' : '#007a53', fontWeight: 700 }}>
                       {fmtN(kpi.avgG)}
                     </span>
                   </td>
@@ -1040,103 +1368,16 @@ function ReportLayout({ payload, reportId, opts }) {
             />
             <MonthlyTable rows={pageRows} isLast={pi === pages.length - 1} />
             <div className="rp-table-legend">
-              <RpIcon icon={FiMoon} size={11} color="#96721A" />
+              <RpIcon icon={FiMoon} size={11} color="#006e96" />
               <span>شهر رمضان</span>
               <span className="rp-leg-sep">·</span>
-              <RpIcon icon={FaMosque} size={11} color="#96721A" />
+              <RpIcon icon={FaMosque} size={11} color="#006e96" />
               <span>موسم الحج</span>
             </div>
-            <RpPageFooter yrLabel={yrLabel} reportId={reportId} today={today} />
+            <RpPageFooter yrLabel={yrLabel} today={today} />
           </div>
         ))
       })()}
-
-      {/* ══════════════════════════════════════════════════════════
-          PAGE 3 — KEY INSIGHTS
-      ══════════════════════════════════════════════════════════ */}
-      {opts.insights && (
-        <div className="rp-page rp-page-content">
-          <RpPageHeader
-            sectionLabel="القسم الرابع"
-            title="الاستنتاجات والتحليل"
-            sub={`رؤى تحليلية مبنية على بيانات ${yrLabel} · ${today}`}
-          />
-
-          <div className="rp-insights-box">
-            <div className="rp-insights-hdr">
-              <span className="rp-insights-dot" />
-              أبرز النتائج التحليلية
-            </div>
-            {insights.map((ins, i) => (
-              <div key={i} className="rp-insight-row">
-                <div className="rp-insight-num">{i + 1}</div>
-                <div className="rp-insight-body">
-                  <p className="rp-insight-txt">{ins}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Critical days breakdown */}
-          {kpi && dayBreakdown && (
-            <div className="rp-breakdown-box">
-              <div className="rp-breakdown-title">توزيع الأيام — تفصيل الحالة</div>
-
-              {/* 4-cell grid: عجز + حرج + فائض + إجمالي */}
-              <div className="rp-breakdown-grid rp-breakdown-grid-4">
-                <div className="rp-bd-cell rp-bd-dem">
-                  <div className="rp-bd-val">{dayBreakdown.defDays}</div>
-                  <div className="rp-bd-lbl">يوم عجز</div>
-                  <div className="rp-bd-pct">{dayBreakdown.defPct}%</div>
-                </div>
-                <div className="rp-bd-cell rp-bd-crit">
-                  <div className="rp-bd-val">{dayBreakdown.critDays}</div>
-                  <div className="rp-bd-lbl">يوم حرج</div>
-                  <div className="rp-bd-pct">{dayBreakdown.critPct}%</div>
-                </div>
-                <div className="rp-bd-cell rp-bd-sup">
-                  <div className="rp-bd-val">{dayBreakdown.surDays}</div>
-                  <div className="rp-bd-lbl">يوم فائض</div>
-                  <div className="rp-bd-pct">{dayBreakdown.surPct}%</div>
-                </div>
-                <div className="rp-bd-cell rp-bd-total">
-                  <div className="rp-bd-val">{dayBreakdown.total}</div>
-                  <div className="rp-bd-lbl">إجمالي الأيام</div>
-                  <div className="rp-bd-pct">100%</div>
-                </div>
-              </div>
-
-              {/* Legend: definitions for each day type */}
-              <div className="rp-bd-legend">
-                <div className="rp-bd-leg-title">تعريف أنواع الأيام حسب مستوى التشغيل</div>
-
-                <div className="rp-bd-leg-row">
-                  <span className="rp-bd-leg-dot rp-bd-leg-dot--dem" />
-                  <span>
-                    <strong>أيام العجز:</strong> تتجاوز المستهدفات 95% من الطاقة الاستيعابية.
-                  </span>
-                </div>
-
-                <div className="rp-bd-leg-row">
-                  <span className="rp-bd-leg-dot rp-bd-leg-dot--crit" />
-                  <span>
-                    <strong>الأيام الحرجة:</strong> تتراوح المستهدفات بين 80% و95% من الطاقة الاستيعابية.
-                  </span>
-                </div>
-
-                <div className="rp-bd-leg-row">
-                  <span className="rp-bd-leg-dot rp-bd-leg-dot--sup" />
-                  <span>
-                    <strong>أيام الفائض:</strong> تقل المستهدفات عن 80% من الطاقة الاستيعابية.
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <RpPageFooter yrLabel={yrLabel} reportId={reportId} today={today} />
-        </div>
-      )}
 
       {/* ══════════════════════════════════════════════════════════
           PAGE 5 — SCENARIO DETAILS
@@ -1153,7 +1394,7 @@ function ReportLayout({ payload, reportId, opts }) {
             <>
               <div className="rp-sc-summary">
                 <div className="rp-sc-sm-cell">
-                  <span className="rp-sc-sm-lbl">تعديلات الطاقة</span>
+                  <span className="rp-sc-sm-lbl">تعديلات الطاقة الاستيعابية</span>
                   <strong className="rp-sc-sm-val sup">
                     {activeSliders.filter(s => s.cat === 'supply').length} متغيّر
                   </strong>
@@ -1205,7 +1446,7 @@ function ReportLayout({ payload, reportId, opts }) {
                               <RpIcon
                                 icon={isPos ? FiArrowUp : FiTrendingDown}
                                 size={14}
-                                color={isPos ? '#0D9660' : '#C86D5E'}
+                                color={isPos ? '#007a53' : '#b85c4e'}
                               />
                             </span>
                           )}
@@ -1240,7 +1481,7 @@ function ReportLayout({ payload, reportId, opts }) {
             </div>
           )}
 
-          <RpPageFooter yrLabel={yrLabel} reportId={reportId} today={today} />
+          <RpPageFooter yrLabel={yrLabel} today={today} />
         </div>
       )}
 
@@ -1258,12 +1499,10 @@ function ReportLayout({ payload, reportId, opts }) {
         <table className="rp-table rp-ap-table">
           <tbody>
             {[
-              ['معرّف التقرير', reportId],
               ['تاريخ التصدير', today],
               ['الفترة المحلَّلة', yrLabel],
               ['نوع المستهدفات', demTypeLabel],
               ['نوع الطاقة الاستيعابية', supTypeLabel],
-              ['نطاق السيناريو', scopeLabel],
               ['إجمالي نقاط البيانات', `${series.length} يوم`],
               ['أيام رمضان المرصودة', `${ram?.rDays ?? 0} يوم`],
               ['إجمالي أيام العجز', kpi ? `${kpi.defD} يوم (${Math.round(kpi.defPct)}%)` : '—'],
@@ -1285,7 +1524,7 @@ function ReportLayout({ payload, reportId, opts }) {
             لا يُعتمد عليها مرجعاً رسمياً نهائياً دون مراجعة الجهات المختصة.</strong>
         </div>
 
-        <RpPageFooter yrLabel={yrLabel} reportId={reportId} today={today} />
+        <RpPageFooter yrLabel={yrLabel} today={today} />
       </div>
 
     </div>
@@ -1295,7 +1534,7 @@ function ReportLayout({ payload, reportId, opts }) {
 // ════════════════════════════════════════════════════════════════
 //  PDF GENERATOR — uses CP.pdf as cover, merges via pdf-lib
 // ════════════════════════════════════════════════════════════════
-async function generatePDF(rootEl, reportId, yr, quality, onProgress) {
+async function generatePDF(rootEl, yr, quality, onProgress) {
   const { default: jsPDF } = await import('jspdf')
   const { default: html2canvas } = await import('html2canvas')
 
@@ -1322,8 +1561,12 @@ async function generatePDF(rootEl, reportId, yr, quality, onProgress) {
 
   onProgress(68)
 
-  const yrLabel = yr ?? 'متعدد'
-  const filename = `تقرير-${yrLabel}-${reportId}.pdf`
+  const now = new Date()
+
+  const date = now.toLocaleDateString('ar-SA') // التاريخ هجري/ميلادي حسب الإعداد
+  const time = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
+
+  const filename = `تحليل المنصة الوطنية للطاقة الاستيعابية لإيواء مكة المكرمة - ${date}.pdf`
 
   try {
     const { PDFDocument } = await import('pdf-lib')
@@ -1376,11 +1619,10 @@ async function generatePDF(rootEl, reportId, yr, quality, onProgress) {
 const STEPS = ['جمع البيانات', 'تجهيز الصفحات', 'توليد PDF', 'التحميل']
 
 export default function ExportModal({ onClose, payload }) {
-  const reportId = useRef(genId()).current
   const reportRef = useRef(null)
 
   const [reportName, setReportName] = useState(
-    `تقرير إيواء مكة ${payload.yr ?? payload.seriesYears?.join('–')} — ${nowLabel()}`
+    `تقرير تحليل المنصة الوطنية للطاقة الاستيعابية لإيواء مكة المكرمة - ${nowLabel()}`
   )
   const [opts, setOpts] = useState({
     kpis: true, tables: true, insights: true, scenario: true,
@@ -1408,14 +1650,14 @@ export default function ExportModal({ onClose, payload }) {
       const el = reportRef.current
       if (!el) throw new Error('فشل تحميل تخطيط التقرير')
 
-      const filename = await generatePDF(el, reportId, payload.yr, quality, p => {
+      const filename = await generatePDF(el, payload.yr, quality, p => {
         setProgress(p)
         if (p > 30) setStep(2)
         if (p > 65) setStep(3)
         if (p > 85) setStep(4)
       })
 
-      const entry = { id: reportId, name: reportName, filename, yr: payload.yr, ts: Date.now() }
+      const entry = { name: reportName, filename, yr: payload.yr, ts: Date.now() }
       const updated = [entry, ...getRecent()].slice(0, 5)
       saveRecent(updated)
       setRecent(updated)
@@ -1426,7 +1668,7 @@ export default function ExportModal({ onClose, payload }) {
       setErrMsg(e.message ?? 'حدث خطأ أثناء التوليد')
       setPhase('error')
     }
-  }, [payload, quality, reportId, reportName])
+  }, [payload, quality, reportName])
 
   const activeCount = Object.values(payload.sc).filter(v => v !== 0).length
 
@@ -1443,7 +1685,7 @@ export default function ExportModal({ onClose, payload }) {
       {/* Hidden report layout */}
       <div style={{ position: 'fixed', top: 0, left: '-9999px', width: '794px', zIndex: -1 }}>
         <div ref={reportRef} style={{ width: '100%' }}>
-          <ReportLayout payload={payload} reportId={reportId} opts={opts} />
+          <ReportLayout payload={payload} opts={opts} />
         </div>
       </div>
 
@@ -1543,7 +1785,6 @@ export default function ExportModal({ onClose, payload }) {
               <div className="exp-done-sub">
                 تم تحميل <strong>{reportName}</strong> إلى جهازك
               </div>
-              <div className="exp-done-id">معرّف التقرير: {reportId}</div>
               <div className="exp-actions" style={{ marginTop: 24 }}>
                 <button className="exp-btn-cancel" onClick={onClose}>إغلاق</button>
                 <button className="exp-btn-primary"
@@ -1647,6 +1888,8 @@ export function buildReportPayload({ yr, kpi, ram, sc, scope, peakDemand, series
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, v]) => ({
       name: !yr && seriesYears.length > 1 ? `${v.name} ${v.yr}` : v.name,
+      mo: v.mo,
+      yr: v.yr,
       avgDem: v.n ? Math.round(v.demSum / v.n) : 0,
       avgSup: v.n ? Math.round(v.supSum / v.n) : 0,
       avgGap: v.n ? Math.round((v.demSum - v.supSum) / v.n) : 0,

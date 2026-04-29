@@ -2117,8 +2117,8 @@ input.sc-sl-input:active::-webkit-slider-thumb {
   }
 }
 
-/* ── Desktop: scenario sidebar always visible ── */
-@media (min-width: 769px) {
+/* ── Desktop (above iPad): scenario sidebar always visible ── */
+@media (min-width: 1181px) {
   .scenario-panel {
     width: 296px !important;
     box-shadow: 4px 0 32px rgba(65, 64, 66, 0.15), 1px 0 0 rgba(65, 64, 66, 0.06);
@@ -2145,40 +2145,8 @@ input.sc-sl-input:active::-webkit-slider-thumb {
    Targets: iPad mini/Air/Pro portrait (768–834px) and landscape (1024–1194px)
 ════════════════════════════════════════════════════════════════ */
 
-/* ── iPad portrait: sidebar shrinks + becomes toggleable ── */
+/* ── iPad portrait: scenario handled by new global iPad rule ── */
 @media (min-width: 769px) and (max-width: 900px) {
-
-  /* Override the desktop "always visible" rule — let user toggle it */
-  .scenario-panel {
-    width: 0 !important;
-    box-shadow: none !important;
-  }
-
-  .scenario-panel.open {
-    width: 272px !important;
-    box-shadow: 4px 0 24px rgba(65, 64, 66, 0.12), 1px 0 0 rgba(65, 64, 66, 0.06) !important;
-  }
-
-  .scenario-sidebar {
-    width: 272px !important;
-    transform: translateX(24px) !important;
-    opacity: 0 !important;
-  }
-
-  .scenario-panel.open .scenario-sidebar {
-    transform: translateX(0) !important;
-    opacity: 1 !important;
-  }
-
-  /* Show the toggle button on iPad portrait */
-  .sc-toggle-btn {
-    display: inline-flex !important;
-  }
-
-  /* Show close button in sidebar */
-  .sidebar-close-btn {
-    display: flex !important;
-  }
 
   /* KPI row: 2×2 grid on narrow iPad */
   .kpi-row {
@@ -2188,17 +2156,8 @@ input.sc-sl-input:active::-webkit-slider-thumb {
   /* Mini chart trio — let the base 600–899px responsive rule handle layout */
 }
 
-/* ── iPad landscape: slightly narrower sidebar ── */
+/* ── iPad landscape: scenario handled by global iPad rule ── */
 @media (min-width: 901px) and (max-width: 1180px) {
-
-  .scenario-panel,
-  .scenario-panel.open {
-    width: 240px !important;
-  }
-
-  .scenario-sidebar {
-    width: 240px !important;
-  }
 
   /* 2-col KPIs in this range to avoid overcrowding */
   .kpi-top-grid {
@@ -2210,6 +2169,18 @@ input.sc-sl-input:active::-webkit-slider-thumb {
 
 /* ── All iPad sizes: enlarged touch targets ── */
 @media (min-width: 768px) and (max-width: 1180px) {
+
+  /* Drag pill at top on iPad */
+  .scenario-sidebar::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 3px;
+    border-radius: 99px;
+    background: rgba(65, 64, 66, 0.18);
+    margin: 10px auto 2px;
+    flex-shrink: 0;
+  }
 
   /* Seg buttons — bigger tap area */
   .seg-btn {
@@ -2490,5 +2461,97 @@ input.sc-sl-input:active::-webkit-slider-thumb {
   .monthly-chart-wide .recharts-xAxis .recharts-text,
   .monthly-chart-wide .recharts-xAxis text {
     font-size: 7.5px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FORMULA GRIDS — mobile stacking for formulas
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 599px) {
+  .formula-grid {
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+  }
+
+  .formula-grid-supply {
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+  }
+
+  .formula-op {
+    font-size: 14px !important;
+    text-align: center !important;
+    padding: 2px 0 !important;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 768px) {
+  .formula-grid {
+    grid-template-columns: 1fr auto 1fr !important;
+    gap: 5px !important;
+  }
+
+  .formula-grid-supply {
+    grid-template-columns: 1fr auto 1fr !important;
+    gap: 5px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   iPAD SCENARIOS — collapsed by default, slide from top
+═══════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1180px) {
+
+  /* Override the desktop "always visible" rule — hide by default */
+  .scenario-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    transition: max-height 0.42s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.3s ease !important;
+    order: -1;
+  }
+
+  .scenario-panel.open {
+    max-height: 2000px !important;
+    box-shadow: 0 6px 20px rgba(65, 64, 66, 0.12), 0 1px 0 rgba(65, 64, 66, 0.06) !important;
+    overflow: visible !important;
+  }
+
+  .scenario-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    transform: translateY(-10px) !important;
+    opacity: 0 !important;
+    transition: transform 0.33s cubic-bezier(0.32, 0.72, 0, 1) 0.05s, opacity 0.23s ease 0.05s !important;
+    border-left: none !important;
+    border-bottom: 1px solid rgba(65, 64, 66, 0.09) !important;
+  }
+
+  .scenario-panel.open .scenario-sidebar {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+  }
+
+  .main-layout {
+    flex-direction: column !important;
+  }
+
+  /* Show toggle and close buttons */
+  .sc-toggle-btn {
+    display: inline-flex !important;
+  }
+
+  .sidebar-close-btn {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 599px) {
+  .core-formula-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5px !important;
   }
 }

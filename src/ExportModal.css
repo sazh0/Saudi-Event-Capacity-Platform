@@ -26,20 +26,19 @@
   padding: 20px;
   font-family: "BahijTheSansArabic", "Cairo", "Segoe UI", sans-serif;
   direction: rtl;
-  background: rgba(22, 20, 21, 0.544);
+  background: rgba(65, 64, 66, 0.35);
 }
 
 .exp-modal {
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(65, 64, 66, 0.10);
   border-radius: 18px;
   width: 100%;
   max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 28px 90px rgba(65, 64, 66, 0.22);
   animation: expSlideUp .26s cubic-bezier(.34, 1.56, .64, 1);
-  background: rgba(22, 20, 21, 0.747);
-  backdrop-filter: blur(25px);
+  background: #ffffff;
 }
 
 @keyframes expSlideUp {
@@ -60,7 +59,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgba(65, 64, 66, 0.08);
   background: rgba(150, 113, 38, 0.04);
 }
 
@@ -85,12 +84,12 @@
 .exp-header-title {
   font-size: 15px;
   font-weight: 900;
-  color: #F4F1EB;
+  color: #414042;
 }
 
 .exp-header-sub {
   font-size: 11px;
-  color: rgba(244, 241, 235, 0.38);
+  color: rgba(65, 64, 66, 0.45);
   margin-top: 2px;
 }
 
@@ -98,9 +97,9 @@
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(244, 241, 235, 0.4);
+  background: rgba(65, 64, 66, 0.04);
+  border: 1px solid rgba(65, 64, 66, 0.10);
+  color: rgba(65, 64, 66, 0.45);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -139,16 +138,16 @@
 .exp-label {
   font-size: 10.5px;
   font-weight: 700;
-  color: rgba(244, 241, 235, 0.38);
+  color: rgba(65, 64, 66, 0.45);
   text-transform: uppercase;
 }
 
 .exp-input {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(65, 64, 66, 0.04);
+  border: 1px solid rgba(65, 64, 66, 0.12);
   border-radius: 9px;
   padding: 10px 14px;
-  color: #F4F1EB;
+  color: #414042;
   font-family: "BahijTheSansArabic", "Cairo", "Segoe UI", sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -174,12 +173,12 @@
   gap: 10px;
   padding: 10px 13px;
   border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(65, 64, 66, 0.09);
+  background: rgba(65, 64, 66, 0.03);
   cursor: pointer;
   transition: all .15s;
   font-size: 13px;
-  color: rgba(244, 241, 235, 0.5);
+  color: rgba(65, 64, 66, 0.55);
 }
 
 .exp-check input {
@@ -190,8 +189,8 @@
   width: 18px;
   height: 18px;
   border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(65, 64, 66, 0.14);
+  background: rgba(65, 64, 66, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -203,7 +202,7 @@
 .exp-check.on {
   border-color: rgba(150, 113, 38, 0.3);
   background: rgba(150, 113, 38, 0.07);
-  color: #F4F1EB;
+  color: #414042;
 }
 
 .exp-check.on .exp-check-box {
@@ -215,7 +214,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  color: rgba(244, 241, 235, 0.4);
+  color: rgba(65, 64, 66, 0.45);
 }
 
 .exp-check.on .exp-check-icon {
@@ -230,7 +229,7 @@
 
 .exp-check-sub {
   font-size: 10px;
-  color: rgba(244, 241, 235, 0.28);
+  color: rgba(65, 64, 66, 0.35);
 }
 
 /* ── Quality ── */
@@ -247,9 +246,9 @@
   gap: 3px;
   padding: 10px 14px;
   border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.025);
-  color: rgba(244, 241, 235, 0.45);
+  border: 1px solid rgba(65, 64, 66, 0.12);
+  background: rgba(65, 64, 66, 0.03);
+  color: rgba(65, 64, 66, 0.55);
   font-family: "BahijTheSansArabic", "Cairo", "Segoe UI", sans-serif;
   cursor: pointer;
   transition: all .15s;
@@ -276,15 +275,15 @@
   gap: 16px;
   flex-wrap: wrap;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(65, 64, 66, 0.03);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(65, 64, 66, 0.09);
   font-size: 12px;
-  color: rgba(244, 241, 235, 0.45);
+  color: rgba(65, 64, 66, 0.55);
 }
 
 .exp-summary strong {
-  color: #F4F1EB;
+  color: #414042;
   font-weight: 800;
 }
 
@@ -298,7 +297,7 @@
 .exp-recent-title {
   font-size: 10px;
   font-weight: 700;
-  color: rgba(244, 241, 235, 0.28);
+  color: rgba(65, 64, 66, 0.35);
   text-transform: uppercase;
   margin-bottom: 2px;
 }
@@ -308,14 +307,14 @@
   justify-content: space-between;
   align-items: center;
   font-size: 11.5px;
-  color: rgba(244, 241, 235, 0.38);
+  color: rgba(65, 64, 66, 0.45);
   padding: 5px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(65, 64, 66, 0.06);
 }
 
 .exp-recent-date {
   font-size: 10px;
-  color: rgba(244, 241, 235, 0.22);
+  color: rgba(65, 64, 66, 0.30);
 }
 
 /* ── Actions ── */
@@ -329,9 +328,9 @@
 .exp-btn-cancel {
   padding: 10px 20px;
   border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(65, 64, 66, 0.12);
   background: transparent;
-  color: rgba(244, 241, 235, 0.45);
+  color: rgba(65, 64, 66, 0.55);
   font-family: "BahijTheSansArabic", "Cairo", "Segoe UI", sans-serif;
   font-size: 13px;
   font-weight: 700;
@@ -340,8 +339,8 @@
 }
 
 .exp-btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #F4F1EB;
+  background: rgba(65, 64, 66, 0.06);
+  color: #414042;
 }
 
 .exp-btn-primary {
@@ -411,14 +410,14 @@
 .exp-gen-title {
   font-size: 16px;
   font-weight: 800;
-  color: #F4F1EB;
+  color: #414042;
   margin-bottom: 20px;
 }
 
 .exp-progress-wrap {
   width: 100%;
   height: 6px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(65, 64, 66, 0.08);
   border-radius: 10px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -452,7 +451,7 @@
   align-items: center;
   gap: 10px;
   font-size: 13px;
-  color: rgba(244, 241, 235, 0.28);
+  color: rgba(65, 64, 66, 0.35);
 }
 
 .exp-step.done {
@@ -460,7 +459,7 @@
 }
 
 .exp-step.active {
-  color: #F4F1EB;
+  color: #414042;
   font-weight: 700;
 }
 
@@ -487,7 +486,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border: 1.5px solid rgba(65, 64, 66, 0.20);
   display: block;
 }
 
@@ -507,7 +506,7 @@
 
 .exp-gen-note {
   font-size: 11px;
-  color: rgba(244, 241, 235, 0.22);
+  color: rgba(65, 64, 66, 0.30);
 }
 
 /* ── Done / Error ── */
@@ -531,19 +530,19 @@
 .exp-done-title {
   font-size: 18px;
   font-weight: 900;
-  color: #F4F1EB;
+  color: #414042;
   margin-bottom: 8px;
 }
 
 .exp-done-sub {
   font-size: 13px;
-  color: rgba(244, 241, 235, 0.45);
+  color: rgba(65, 64, 66, 0.55);
   margin-bottom: 6px;
 }
 
 .exp-done-id {
   font-size: 10px;
-  color: rgba(244, 241, 235, 0.2);
+  color: rgba(65, 64, 66, 0.28);
   font-variant-numeric: tabular-nums;
 }
 
@@ -755,8 +754,8 @@
 
 /* ── Ramadan summary box ── */
 .rp-ram-summary {
-  background: #fffdf0;
-  border: 1px solid #f5d96a;
+  background: rgba(107, 143, 0, 0.05);
+  border: 1px solid rgba(107, 143, 0, 0.35);
   border-radius: 10px;
   padding: 14px 16px;
   margin-top: 6px;
@@ -765,7 +764,7 @@
 .rp-ram-summary-title {
   font-size: 12px;
   font-weight: 800;
-  color: #96721A;
+  color: #006e96;
   margin-bottom: 10px;
   display: flex;
   align-items: center;
@@ -786,7 +785,7 @@
 
 .rp-rsg-lbl {
   font-size: 9px;
-  color: #96721A;
+  color: #006e96;
   font-weight: 700;
   opacity: .85;
 }
@@ -802,28 +801,28 @@
 }
 
 .rp-rsg-val.dem {
-  color: #b91c1c;
+  color: #b85c4e;
 }
 
 .rp-rsg-val.sup {
-  color: #065f46;
+  color: #007a53;
 }
 
 .rp-rsg-hijri {
   font-size: 10px;
-  color: #96721A;
+  color: #006e96;
   font-weight: 600;
-  background: rgba(150, 114, 26, 0.08);
+  background: rgba(107, 143, 0, 0.08);
   padding: 1px 7px;
   border-radius: 10px;
-  border: 1px solid rgba(150, 114, 26, 0.22);
+  border: 1px solid rgba(107, 143, 0, 0.25);
 }
 
 .rp-ram-periods {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-top: 1px solid rgba(150, 114, 26, 0.25);
+  border-top: 1px solid rgba(107, 143, 0, 0.28);
   margin-top: 10px;
   padding-top: 8px;
 }
@@ -834,14 +833,14 @@
   gap: 6px;
   font-size: 10px;
   padding: 6px 0;
-  border-bottom: 1px solid rgba(150, 114, 26, 0.10);
+  border-bottom: 1px solid rgba(107, 143, 0, 0.10);
   color: #4b5563;
   align-items: center;
 }
 
 .rp-rpr-label {
   font-weight: 700;
-  color: #96721A;
+  color: #006e96;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -850,9 +849,9 @@
 .rp-rpr-hijri {
   font-size: 8.5px;
   font-weight: 600;
-  color: #96721A;
-  background: rgba(150, 114, 26, 0.10);
-  border: 1px solid rgba(150, 114, 26, 0.22);
+  color: #006e96;
+  background: rgba(107, 143, 0, 0.10);
+  border: 1px solid rgba(107, 143, 0, 0.25);
   border-radius: 8px;
   padding: 1px 5px;
 }
@@ -860,9 +859,9 @@
 .rp-ram-hijri-year {
   font-size: 10px;
   font-weight: 700;
-  color: #96721A;
-  background: rgba(150, 114, 26, 0.10);
-  border: 1px solid rgba(150, 114, 26, 0.22);
+  color: #006e96;
+  background: rgba(107, 143, 0, 0.10);
+  border: 1px solid rgba(107, 143, 0, 0.25);
   border-radius: 8px;
   padding: 1px 8px;
   margin-right: 8px;
@@ -883,11 +882,11 @@
 }
 
 .rp-rpr-pct.dem {
-  color: #b91c1c;
+  color: #b85c4e;
 }
 
 .rp-rpr-pct.sup {
-  color: #065f46;
+  color: #007a53;
 }
 
 .rp-rpr-avg {
@@ -973,22 +972,22 @@
 }
 
 .rp-td-dem {
-  color: #1A7AB8;
+  color: #967126;
   font-weight: 700;
 }
 
 .rp-td-sup {
-  color: #0D9660;
+  color: #007a53;
   font-weight: 700;
 }
 
 .rp-td-gap-neg {
-  color: #b91c1c;
+  color: #b85c4e;
   font-weight: 800;
 }
 
 .rp-td-gap-pos {
-  color: #065f46;
+  color: #007a53;
   font-weight: 700;
 }
 
@@ -1023,9 +1022,9 @@
 
 .rp-hijri-badge {
   display: inline-block;
-  background: #fdfaf0;
-  color: #96721A;
-  border: 1px solid #e8c84a;
+  background: rgba(150, 113, 38, 0.07);
+  color: #967126;
+  border: 1px solid rgba(150, 113, 38, 0.30);
   border-radius: 8px;
   padding: 1px 8px;
   font-size: 10px;
@@ -1036,9 +1035,9 @@
 .rp-hijri-date {
   display: inline-block;
   font-size: 9.5px;
-  color: #96721A;
-  background: rgba(150, 114, 26, 0.07);
-  border: 1px solid rgba(150, 114, 26, 0.20);
+  color: #967126;
+  background: rgba(150, 113, 38, 0.07);
+  border: 1px solid rgba(150, 113, 38, 0.22);
   border-radius: 8px;
   padding: 1px 7px;
   font-weight: 600;
@@ -1047,7 +1046,7 @@
 
 /* ── Deficit gap value ── */
 .rp-def-gap {
-  color: #C86D5E;
+  color: #b85c4e;
   font-weight: 800;
 }
 
@@ -1071,26 +1070,26 @@
 }
 
 .rp-season-ram {
-  background: #fffdf0;
-  color: #96721A;
-  border: 1px solid #f5d96a;
+  background: rgba(107, 143, 0, 0.08);
+  color: #004d6a;
+  border: 1px solid rgba(107, 143, 0, 0.3);
 }
 
 .rp-season-hajj {
-  background: #fdf5e6;
-  color: #7a5014;
-  border: 1px solid #d4a84a;
+  background: rgba(74, 100, 0, 0.08);
+  color: #3a5000;
+  border: 1px solid rgba(74, 100, 0, 0.3);
 }
 
 .rp-td-effect-pos {
   font-size: 10px;
-  color: #065f46;
+  color: #007a53;
   font-weight: 600;
 }
 
 .rp-td-effect-neg {
   font-size: 10px;
-  color: #b91c1c;
+  color: #b85c4e;
   font-weight: 600;
 }
 
@@ -1122,15 +1121,15 @@
 }
 
 .rp-badge-ram {
-  background-color: #f5d96a;
-  border: 1px solid #d4a820;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b4e10' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E");
+  background-color: rgba(107, 143, 0, 0.22);
+  border: 1px solid rgba(107, 143, 0, 0.45);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23004d6a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E");
 }
 
 .rp-badge-hajj {
-  background-color: #d4a84a;
-  border: 1px solid #a07020;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234a2e00'%3E%3Crect x='7' y='10' width='10' height='10' rx='1'/%3E%3Crect x='9' y='7' width='6' height='4' rx='1'/%3E%3Crect x='10' y='4' width='4' height='4' rx='1'/%3E%3Crect x='10' y='14' width='4' height='6'/%3E%3C/svg%3E");
+  background-color: rgba(74, 100, 0, 0.22);
+  border: 1px solid rgba(74, 100, 0, 0.40);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a5000'%3E%3Crect x='7' y='10' width='10' height='10' rx='1'/%3E%3Crect x='9' y='7' width='6' height='4' rx='1'/%3E%3Crect x='10' y='4' width='4' height='4' rx='1'/%3E%3Crect x='10' y='14' width='4' height='6'/%3E%3C/svg%3E");
 }
 
 .rp-pct-pill {
@@ -1142,18 +1141,18 @@
 }
 
 .rp-pct-pill.dem {
-  background: rgba(200, 109, 94, 0.12);
-  color: #a3473a;
+  background: rgba(184, 92, 78, 0.12);
+  color: #8a3a2e;
 }
 
 .rp-pct-pill.warn {
-  background: #fef3c7;
-  color: #92400e;
+  background: rgba(150, 113, 38, 0.10);
+  color: #7a5a12;
 }
 
 .rp-pct-pill.sup {
-  background: #dcfce7;
-  color: #065f46;
+  background: rgba(0, 122, 83, 0.10);
+  color: #005236;
 }
 
 .rp-status-pill {
@@ -1165,13 +1164,13 @@
 }
 
 .rp-status-pill.dem {
-  background: rgba(200, 109, 94, 0.12);
-  color: #a3473a;
+  background: rgba(184, 92, 78, 0.12);
+  color: #8a3a2e;
 }
 
 .rp-status-pill.sup {
-  background: #dcfce7;
-  color: #065f46;
+  background: rgba(0, 122, 83, 0.10);
+  color: #005236;
 }
 
 .rp-cat-pill {
@@ -1183,15 +1182,15 @@
 }
 
 .rp-cat-pill.sup {
-  background: #f0fdf4;
-  color: #065f46;
-  border: 1px solid #bbf7d0;
+  background: rgba(0, 122, 83, 0.08);
+  color: #005236;
+  border: 1px solid rgba(0, 122, 83, 0.25);
 }
 
 .rp-cat-pill.dem {
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: rgba(150, 113, 38, 0.08);
+  color: #7a5a12;
+  border: 1px solid rgba(150, 113, 38, 0.28);
 }
 
 .rp-delta-val {
@@ -1200,11 +1199,11 @@
 }
 
 .rp-delta-val.pos {
-  color: #0D9660;
+  color: #007a53;
 }
 
 .rp-delta-val.neg {
-  color: #C86D5E;
+  color: #b85c4e;
 }
 
 .rp-delta-val.with-icon {
@@ -1304,27 +1303,27 @@
 }
 
 .rp-leg-dem {
-  color: #1A7AB8;
+  color: #967126;
 }
 
 .rp-leg-sup {
-  color: #0D9660;
+  color: #007a53;
 }
 
 .rp-leg-gap-dem {
-  color: rgba(26, 122, 184, 0.65);
+  color: rgba(150, 113, 38, 0.65);
 }
 
 .rp-leg-gap-sup {
-  color: rgba(13, 150, 96, 0.65);
+  color: rgba(0, 122, 83, 0.65);
 }
 
 .rp-leg-ram {
-  color: #96721A;
+  color: #006e96;
 }
 
 .rp-leg-hajj {
-  color: #7a5014;
+  color: #004d6a;
 }
 
 .rp-chart-unit {
@@ -1369,21 +1368,21 @@
 }
 
 .rp-occ-badge.sup {
-  background: #dcfce7;
-  color: #065f46;
-  border: 1px solid #bbf7d0;
+  background: rgba(0, 122, 83, 0.10);
+  color: #005236;
+  border: 1px solid rgba(0, 122, 83, 0.28);
 }
 
 .rp-occ-badge.warn {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
+  background: rgba(150, 113, 38, 0.10);
+  color: #7a5a12;
+  border: 1px solid rgba(150, 113, 38, 0.28);
 }
 
 .rp-occ-badge.dem {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: rgba(184, 92, 78, 0.10);
+  color: #8a3a2e;
+  border: 1px solid rgba(184, 92, 78, 0.28);
 }
 
 .rp-occ-pct {
@@ -1407,15 +1406,15 @@
 }
 
 .rp-occ-fill.sup {
-  background: linear-gradient(to left, #059669, #10b981);
+  background: linear-gradient(to left, #007a53, #009a65);
 }
 
 .rp-occ-fill.warn {
-  background: linear-gradient(to left, #d97706, #fbbf24);
+  background: linear-gradient(to left, #967126, #b08432);
 }
 
 .rp-occ-fill.dem {
-  background: linear-gradient(to left, #dc2626, #ef4444);
+  background: linear-gradient(to left, #b85c4e, #c97060);
 }
 
 .rp-occ-mark {
@@ -1443,15 +1442,15 @@
 }
 
 .rp-occ-leg.sup {
-  color: #059669;
+  color: #007a53;
 }
 
 .rp-occ-leg.warn {
-  color: #d97706;
+  color: #967126;
 }
 
 .rp-occ-leg.dem {
-  color: #dc2626;
+  color: #b85c4e;
 }
 
 .rp-occ-leg.note {
@@ -1579,29 +1578,29 @@
 }
 
 .rp-bd-dem {
-  background: rgba(200, 109, 94, 0.08);
-  border: 1px solid rgba(200, 109, 94, 0.25);
+  background: rgba(184, 92, 78, 0.08);
+  border: 1px solid rgba(184, 92, 78, 0.25);
 }
 
 .rp-bd-dem .rp-bd-val {
-  color: #C86D5E;
+  color: #b85c4e;
 }
 
 .rp-bd-dem .rp-bd-lbl {
-  color: #a3473a;
+  color: #8a3a2e;
 }
 
 .rp-bd-dem .rp-bd-pct {
-  color: #C86D5E;
+  color: #b85c4e;
 }
 
 .rp-bd-crit {
-  background: rgba(236, 200, 78, 0.10);
-  border: 1px solid rgba(150, 114, 26, 0.28);
+  background: rgba(150, 113, 38, 0.08);
+  border: 1px solid rgba(150, 113, 38, 0.28);
 }
 
 .rp-bd-crit .rp-bd-val {
-  color: #96721A;
+  color: #967126;
 }
 
 .rp-bd-crit .rp-bd-lbl {
@@ -1609,24 +1608,24 @@
 }
 
 .rp-bd-crit .rp-bd-pct {
-  color: #96721A;
+  color: #967126;
 }
 
 .rp-bd-sup {
-  background: rgba(26, 174, 120, 0.08);
-  border: 1px solid rgba(26, 174, 120, 0.25);
+  background: rgba(0, 122, 83, 0.08);
+  border: 1px solid rgba(0, 122, 83, 0.25);
 }
 
 .rp-bd-sup .rp-bd-val {
-  color: #0D9660;
-}
-
-.rp-bd-sup .rp-bd-lbl {
   color: #007a53;
 }
 
+.rp-bd-sup .rp-bd-lbl {
+  color: #005236;
+}
+
 .rp-bd-sup .rp-bd-pct {
-  color: #0D9660;
+  color: #007a53;
 }
 
 .rp-bd-total {
@@ -1661,7 +1660,7 @@
   gap: 7px;
   font-size: 11px;
   font-weight: 800;
-  color: #96721A;
+  color: #967126;
   margin-bottom: 6px;
 }
 
@@ -1669,7 +1668,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ECC84E;
+  background: #967126;
   flex-shrink: 0;
 }
 
@@ -1688,7 +1687,7 @@
 .rp-bd-critical-val {
   font-size: 22px;
   font-weight: 900;
-  color: #96721A;
+  color: #967126;
   line-height: 1.1;
 }
 
@@ -1735,15 +1734,15 @@
 }
 
 .rp-bd-leg-dot--dem {
-  background: #C86D5E;
+  background: #b85c4e;
 }
 
 .rp-bd-leg-dot--sup {
-  background: #1AAE78;
+  background: #007a53;
 }
 
 .rp-bd-leg-dot--crit {
-  background: #ECC84E;
+  background: #967126;
 }
 
 .rp-bd-val {
@@ -1810,7 +1809,7 @@
 .rp-ram-detailed-title {
   font-size: 11.5px;
   font-weight: 800;
-  color: #96721A;
+  color: #967126;
   margin-bottom: 10px;
   padding: 8px 12px;
   background: #fffdf0;
@@ -1859,7 +1858,7 @@
 }
 
 .rp-sc-sm-val.sup {
-  color: #065f46;
+  color: #007a53;
 }
 
 .rp-sc-sm-val.dem {
@@ -2403,15 +2402,15 @@
 }
 
 .rp-other-status-pill.sup {
-  background: #f0fdf8;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: rgba(0, 122, 83, 0.08);
+  color: #005236;
+  border: 1px solid rgba(0, 122, 83, 0.25);
 }
 
 .rp-other-status-pill.dem {
-  background: #fff5f5;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
+  background: rgba(184, 92, 78, 0.08);
+  color: #8a3a2e;
+  border: 1px solid rgba(184, 92, 78, 0.25);
 }
 
 .rp-other-stats {

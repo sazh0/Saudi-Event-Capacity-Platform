@@ -45,9 +45,9 @@ const T = {
   outside: '#7a5a1e',   // Deep gold  — زوار خارجيون
   inside: '#d4a843',    // Light gold — زوار داخليون
 
-  // ── Seasons — Olive-green family from #6b8f00
-  ram: '#6b8f00', ramL: 'rgba(107,143,0,0.22)', ramBg: 'rgba(107,143,0,0.07)',
-  hajj: '#4a6400', hajjL: 'rgba(74,100,0,0.22)', hajjBg: 'rgba(74,100,0,0.07)',
+  // ── Seasons — Teal-blue family from #006e96
+  ram: '#006e96', ramL: 'rgba(0,110,150,0.22)', ramBg: 'rgba(0,110,150,0.07)',
+  hajj: '#004d6a', hajjL: 'rgba(0,77,106,0.22)', hajjBg: 'rgba(0,77,106,0.07)',
 
   // ── Text — dark on light
   txt: '#414042', txtSub: '#75787b', txtDim: 'rgba(65,64,66,0.45)',
@@ -559,6 +559,25 @@ function MonthlyBarChart({ monthly, monthlyHijri }) {
     )
   }
 
+  /* Custom tick for month names — splits two-word names on small screens */
+  const MonthTick = ({ x, y, payload }) => {
+    const name = payload?.value ?? ''
+    const parts = name.split(' ')
+    if (parts.length >= 2) {
+      return (
+        <text x={x} y={y} textAnchor="middle" fill={T.txtDim} style={{ fontSize: 8 }}>
+          <tspan x={x} dy="0">{parts[0]}</tspan>
+          <tspan x={x} dy="11">{parts.slice(1).join(' ')}</tspan>
+        </text>
+      )
+    }
+    return (
+      <text x={x} y={y + 4} textAnchor="middle" fill={T.txtDim} style={{ fontSize: 8 }}>
+        {name}
+      </text>
+    )
+  }
+
   return (
     <ChartCard title="العجز أو الفائض الشهري"
       info="يوضح الفرق بين الطلب والطاقة الاستيعابية لكل شهر"
@@ -591,9 +610,11 @@ function MonthlyBarChart({ monthly, monthlyHijri }) {
         <BarChart data={data} margin={{ top: 8, right: 3, left: -35, bottom: 2 }} barCategoryGap="28%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(65,64,66,0.08)" vertical={false} />
           <XAxis dataKey="name" type="category"
-            tick={{ fontSize: 9.5, fill: T.txtDim }}
+            tick={<MonthTick />}
             axisLine={false} tickLine={false} interval={0}
             reversed={true}
+            height={35}
+            tickMargin={6}
           />
           <YAxis type="number"
             tick={{ fontSize: 9, fill: T.txtDim }}
@@ -685,7 +706,15 @@ function SeasonalRadialBar({ seasonal }) {
 function RamadanCarousel({ periods = [] }) {
   const GAP = 12   // gap between cards (px)
   const viewportRef = useRef(null)
+  const trackRef = useRef(null)
   const [cardW, setCardW] = useState(210)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const dragStart = useRef(null)
+  const scrollStart = useRef(0)
+  const animRef = useRef(null)
+  const posRef = useRef(0)
+  const speedRef = useRef(0)
 
   useEffect(() => {
     if (!viewportRef.current) return
@@ -710,10 +739,100 @@ function RamadanCarousel({ periods = [] }) {
   const visibleCards = typeof window !== 'undefined'
     ? window.innerWidth <= 599 ? 1 : window.innerWidth <= 1180 ? 2 : 3
     : 3
-  const needsScroll = periods.length > visibleCards
+  // Scroll when 3+ cards (including when exactly equal to visible)
+  const needsScroll = periods.length >= 3 || periods.length > visibleCards
   const track = needsScroll ? [...periods, ...periods] : periods
-  // Speed: 2 s per card, min 6 s total
+  // Speed: 4 s per card, min 8 s total
   const duration = Math.max(periods.length * 4, 8)
+  const totalScrollWidth = periods.length * SLOT
+
+  // --- Auto-scroll animation using requestAnimationFrame ---
+  useEffect(() => {
+    if (!needsScroll || !trackRef.current) return
+    const speed = totalScrollWidth / (duration * 60) // pixels per frame at 60fps
+    speedRef.current = speed
+    let pos = posRef.current
+    let lastTime = performance.now()
+
+    const animate = (now) => {
+      if (!isDragging && !isHovered) {
+        const dt = (now - lastTime) / (1000 / 60) // normalize to 60fps
+        pos += speedRef.current * dt
+        if (pos >= totalScrollWidth) pos -= totalScrollWidth
+        posRef.current = pos
+        if (trackRef.current) {
+          trackRef.current.style.transform = `translateX(-${pos}px)`
+        }
+      }
+      lastTime = now
+      animRef.current = requestAnimationFrame(animate)
+    }
+    animRef.current = requestAnimationFrame(animate)
+    return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current)
+    }
+  }, [needsScroll, isDragging, isHovered, totalScrollWidth, duration])
+
+  // --- Mouse drag handlers ---
+  const handleMouseDown = (e) => {
+    if (!needsScroll) return
+    setIsDragging(true)
+    dragStart.current = e.clientX
+    scrollStart.current = posRef.current
+    e.preventDefault()
+  }
+  const handleMouseMove = (e) => {
+    if (!isDragging || dragStart.current == null) return
+    const diff = dragStart.current - e.clientX
+    let newPos = scrollStart.current + diff
+    if (newPos < 0) newPos += totalScrollWidth
+    if (newPos >= totalScrollWidth) newPos -= totalScrollWidth
+    posRef.current = newPos
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translateX(-${newPos}px)`
+    }
+  }
+  const handleMouseUp = () => {
+    setIsDragging(false)
+    dragStart.current = null
+  }
+
+  // --- Touch drag handlers ---
+  const handleTouchStart = (e) => {
+    if (!needsScroll) return
+    setIsDragging(true)
+    dragStart.current = e.touches[0].clientX
+    scrollStart.current = posRef.current
+  }
+  const handleTouchMove = (e) => {
+    if (!isDragging || dragStart.current == null) return
+    const diff = dragStart.current - e.touches[0].clientX
+    let newPos = scrollStart.current + diff
+    if (newPos < 0) newPos += totalScrollWidth
+    if (newPos >= totalScrollWidth) newPos -= totalScrollWidth
+    posRef.current = newPos
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translateX(-${newPos}px)`
+    }
+  }
+  const handleTouchEnd = () => {
+    setIsDragging(false)
+    dragStart.current = null
+  }
+
+  // Global mouse up listener
+  useEffect(() => {
+    if (isDragging) {
+      const up = () => handleMouseUp()
+      const move = (e) => handleMouseMove(e)
+      document.addEventListener('mouseup', up)
+      document.addEventListener('mousemove', move)
+      return () => {
+        document.removeEventListener('mouseup', up)
+        document.removeEventListener('mousemove', move)
+      }
+    }
+  }, [isDragging])
 
   const RamRow = ({ label, value }) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -733,6 +852,7 @@ function RamadanCarousel({ periods = [] }) {
       padding: '10px 12px',
       boxSizing: 'border-box',
       direction: 'rtl',
+      userSelect: 'none',
     }}>
       <div style={{ fontSize: 11, fontWeight: 800, color: T.ram, marginBottom: 8 }}>{p.label}</div>
       <div style={{ fontSize: 10.5, color: T.txtSub, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
@@ -786,38 +906,105 @@ function RamadanCarousel({ periods = [] }) {
         </div>
       </div>
 
-      {/* Viewport: direction:ltr so cards scroll left regardless of page RTL */}
-      <div
-        ref={viewportRef}
-        className="ram-queue-viewport"
-        style={{ overflow: 'hidden', flex: 1, minHeight: 0, direction: 'ltr' }}
-      >
-        {periods.length === 0 ? (
-          <div style={{ fontSize: 11, color: T.txtDim, direction: 'rtl' }}>لا توجد بيانات لهذه السنة</div>
-        ) : needsScroll ? (
-          /* Scrolling belt: translate by exactly N×SLOT px = one full set */
-          <div
-            className="ram-queue-track"
-            style={{
-              display: 'flex',
-              alignItems: 'stretch',
-              height: '100%',
-              width: 'max-content',
-              animationDuration: `${duration}s`,
-              '--ram-end': `-${periods.length * SLOT}px`,
-            }}
-          >
-            {track.map((p, i) => <PeriodCard key={i} p={p} />)}
-          </div>
-        ) : (
-          /* 1–2 cards: static */
-          <div style={{ display: 'flex', gap: GAP, height: '100%', direction: 'rtl' }}>
+      {/* Ref container for ResizeObserver — always rendered */}
+      <div ref={viewportRef} style={{ position: 'relative' }}>
+
+        {/* Static cards (1-2): rendered directly in RTL — NO scrolling viewport */}
+        {periods.length > 0 && !needsScroll && (
+          <div style={{
+            display: 'flex', gap: GAP, direction: 'rtl',
+            padding: '0 2px',
+          }}>
             {periods.map((p, i) => (
-              <div key={i} style={{ flex: 1 }}><PeriodCard p={p} /></div>
+              <div key={i} style={{
+                flex: periods.length === 1 ? '1 1 auto' : '1 1 0%',
+                minWidth: 0,
+              }}>
+                <div style={{
+                  background: 'rgba(65,64,66,0.03)',
+                  borderRadius: 10,
+                  border: '1px solid rgba(65,64,66,0.10)',
+                  padding: '10px 12px',
+                  boxSizing: 'border-box',
+                  direction: 'rtl',
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: T.ram, marginBottom: 8 }}>{p.label}</div>
+                  <div style={{ fontSize: 10.5, color: T.txtSub, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: T.ram, flexShrink: 0 }} />{p.dateRange}
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: T.ram, flexShrink: 0 }} />{p.days} يوم
+                  </div>
+                  {p.days > 0 ? (
+                    <>
+                      <div style={{
+                        borderRadius: 7, padding: '6px 9px', fontSize: 11, fontWeight: 800, marginBottom: 9,
+                        background: p.pct > 50 ? T.deficitBg : T.surplusBg,
+                        color: p.pct > 50 ? T.deficit : T.surplus,
+                        border: `1px solid ${p.pct > 50 ? T.deficitL : T.surplusL}`
+                      }}>
+                        {p.pct > 50
+                          ? <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><FiAlertTriangle size={11} /> عجز في {Math.round(p.pct)}% من الأيام</span>
+                          : <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><FiCheckCircle size={11} /> فائض في {Math.round(100 - p.pct)}% من الأيام</span>}
+                      </div>
+                      <RamRow label="متوسط العجز" value={`${fmtFull(p.avg)} سرير/يوم`} />
+                      {p.max?.gap < 0 && (
+                        <div style={{ marginBottom: 6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <span style={{ fontSize: 11, color: T.txtSub }}>أعلى عجز</span>
+                            <strong style={{ fontSize: 12, color: T.deficit }}>
+                              {fmtFull(-p.max.gap)}{' '}
+                              <span style={{ fontSize: 10, fontWeight: 500, color: T.txtDim }}>سرير/يوم</span>
+                            </strong>
+                          </div>
+                          <div style={{ fontSize: 10.5, color: T.txtSub, marginTop: 1, textAlign: 'left' }}>
+                            {p.max.dateLabel}{p.max.hijriDate ? <span> · {p.max.hijriDate}</span> : ''}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ fontSize: 11, color: T.txtDim }}>لا توجد بيانات</div>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         )}
-      </div>
+
+        {/* Scrolling viewport: direction:ltr — ONLY used for 3+ cards */}
+        {needsScroll && (
+          <div
+            style={{
+              overflow: 'hidden', flex: 1, minHeight: 0, direction: 'ltr',
+              cursor: isDragging ? 'grabbing' : 'grab',
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => { setIsHovered(false); setIsDragging(false); dragStart.current = null }}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div
+              ref={trackRef}
+              style={{
+                display: 'flex',
+                alignItems: 'stretch',
+                height: '100%',
+                width: 'max-content',
+                willChange: 'transform',
+              }}
+            >
+              {track.map((p, i) => <PeriodCard key={i} p={p} />)}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {periods.length === 0 && (
+          <div style={{ fontSize: 11, color: T.txtDim, direction: 'rtl' }}>لا توجد بيانات لهذه السنة</div>
+        )}
+
+      </div>{/* /ref container */}
     </div>
   )
 }
@@ -1514,6 +1701,47 @@ const MethodDivider = () => (
   <div style={{ height: 1, background: 'rgba(65,64,66,0.08)', margin: '4px 0 18px' }} />
 )
 
+/* Equation block: colored title + two stacked variable rows with result arrow (used in الفرضيات tab) */
+const EquationBlock = ({ title, color, rows, transparent }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+    <div style={{
+      background: transparent ? `${color}18` : color,
+      color: transparent ? color : '#fff',
+      border: transparent ? `1px solid ${color}30` : 'none',
+      borderBottom: transparent ? 'none' : undefined,
+      borderRadius: '8px 8px 0 0', padding: '7px 6px',
+      textAlign: 'center', fontSize: 9.5, fontWeight: 800, lineHeight: 1.4,
+      minHeight: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {title}
+    </div>
+    <div style={{
+      background: transparent ? `${color}08` : 'rgba(65,64,66,0.03)',
+      border: transparent ? `1px solid ${color}30` : '1px solid rgba(65,64,66,0.10)',
+      borderTop: 'none',
+      borderRadius: '0 0 6px 6px',
+      padding: '6px 4px',
+    }}>
+      {rows.map((r, i) => (
+        <div key={i}>
+          {i > 0 && (
+            <div style={{ fontSize: 12, color: T.txtDim, textAlign: 'center', margin: '2px 0' }}>×</div>
+          )}
+          <div style={{
+            background: 'rgba(65,64,66,0.04)',
+            border: '1px solid rgba(65,64,66,0.08)',
+            borderRadius: 5, padding: '5px 4px',
+            textAlign: 'center', lineHeight: 1.3,
+          }}>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: T.txtSub }}>{r.label}</div>
+            <div style={{ fontSize: 8.5, color: T.txtDim, marginTop: 1 }}>{r.sub}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)
+
 /* ════════════════════════════════════════════════════════════════
    PAGE HEADER
 ════════════════════════════════════════════════════════════════ */
@@ -1734,6 +1962,8 @@ function PageHeader({
               const tabs = [
                 { id: 'core', label: 'المفاهيم الأساسية' },
                 { id: 'terms', label: 'المصطلحات' },
+                { id: 'assumptions', label: 'الفرضيات' },
+
               ]
               return (
                 <div style={{
@@ -1771,7 +2001,7 @@ function PageHeader({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
                   {/* المعادلة البصرية */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', gap: 8, alignItems: 'center' }}>
+                  <div className="core-formula-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', gap: 8, alignItems: 'center' }}>
                     {[
                       { label: 'الطاقة الاستيعابية', sub: 'السعة القصوى', border: `${T.sup}33`, color: T.sup },
                       { sym: '−' },
@@ -1825,63 +2055,424 @@ function PageHeader({
 
               {/* ══ TAB 2: المصطلحات ══ */}
               {activeTab === 'terms' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[
-                    {
-                      icon: <MdCircle size={18} style={{ color: T.sup }} />, term: 'الطاقة الاستيعابية', border: `${T.sup}33`, color: T.sup,
-                      simple: 'السعة القصوى',
-                      detail: 'الحد الأقصى لما تستطيع المنظومة تقديمه — مرافق مرخصة + مشاريع مستقبلية + مساكن الحجاج.'
-                    },
-                    {
-                      icon: <MdDiamond size={18} style={{ color: T.dem }} />, term: 'المستهدفات (الطلب)', border: `${T.dem}33`, color: T.dem,
-                      simple: 'الطلب المتوقع',
-                      detail: 'حجم الطلب الفعلي أو المتوقع — معتمرو الخارج + معتمرو الداخل.'
-                    },
-                    {
-                      icon: <MdSwapHoriz size={18} style={{ color: 'rgba(212,170,82,0.8)' }} />, term: 'الفجوة', border: 'rgba(212,170,82,0.2)', color: 'rgba(212,170,82,0.8)',
-                      simple: 'الطلب ناقص الطاقة',
-                      detail: 'موجبة = عجز · سالبة = فائض. الرسم الرئيسي يُصوّر هذه الفجوة يومياً.'
-                    },
-                    {
-                      icon: <FiTrendingDown size={18} style={{ color: T.deficit }} />, term: 'العجز', border: `${T.deficit}22`, color: T.deficit,
-                      simple: 'الطلب يتجاوز ما هو متاح',
-                      detail: 'الموارد لا تكفي لتلبية المطلوب. كلما تكرر العجز زادت الحاجة للتدخل.'
-                    },
-                    {
-                      icon: <FiTrendingUp size={18} style={{ color: T.surplus }} />, term: 'الفائض', border: `${T.surplus}22`, color: T.surplus,
-                      simple: 'الطاقة تتجاوز الطلب',
-                      detail: 'موارد غير مستغَلة — قد يكون هامش أمان مقصوداً أو مؤشراً لتحسين الاستغلال.'
-                    },
-                    {
-                      icon: <MdBarChart size={18} style={{ color: 'rgba(251,191,36,0.8)' }} />, term: 'نسبة الإشغال', border: 'rgba(251,191,36,0.2)', color: 'rgba(251,191,36,0.8)',
-                      simple: 'نسبة الطلب من إجمالي الطاقة المتاحة',
-                      detail: 'تُحسب بقسمة الطلب على الطاقة المتاحة — كلما اقتربت من 100% كلما زاد الضغط. أقل من 80% وضع مريح · 80 إلى 99% يستدعي المتابعة · 100% فأكثر عجز كامل يحتاج تدخلاً.'
-                    },
-                    {
-                      icon: <FiCalendar size={18} style={{ color: T.deficit }} />, term: 'أيام العجز', border: `${T.deficit}22`, color: T.deficit,
-                      simple: 'عدد الأيام التي تجاوز فيها الطلب الطاقة',
-                      detail: 'يعكس تكرار المشكلة'
-                    },
-                    {
-                      icon: <FiArrowUp size={18} style={{ color: 'rgba(251,191,36,0.8)' }} />, term: 'ذروة الطلب', border: 'rgba(251,191,36,0.2)', color: 'rgba(251,191,36,0.8)',
-                      simple: 'أعلى نقطة وصل إليها الطلب',
-                      detail: 'أكبر قيمة طلب يومي مسجلة — تستخدم للتخطيط لأسوأ سيناريو ممكن.'
-                    },
-                  ].map(({ icon, term, border, color, simple, detail }) => (
-                    <div key={term} style={{
-                      background: 'rgba(65,64,66,0.02)',
-                      border: `1px solid ${border}`,
-                      borderRadius: 10, padding: '11px 13px',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                  {/* ── الطاقة الاستيعابية + أنواعها ── */}
+                  <div style={{
+                    border: `1px solid ${T.sup}33`,
+                    borderRadius: 12, overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      background: `${T.sup}0a`,
+                      padding: '12px 14px',
+                      borderBottom: `1px solid ${T.sup}22`,
                       display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 11, alignItems: 'start',
                     }}>
-                      <span style={{ lineHeight: 1, marginTop: 2 }}>{icon}</span>
+                      <MdCircle size={18} style={{ color: T.sup, marginTop: 2 }} />
                       <div>
-                        <div style={{ fontSize: 12.5, fontWeight: 900, color, marginBottom: 3 }}>{term}</div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>{simple}</div>
-                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>{detail}</div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: T.sup, marginBottom: 3 }}>الطاقة الاستيعابية</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>إجمالي السعة المتاحة للإيواء</div>
+                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الحد الأقصى من الأسرّة التي تستطيع منظومة الإيواء توفيرها يومياً، وتشمل ثلاثة مكوّنات:</div>
                       </div>
                     </div>
-                  ))}
+                    <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {[
+                        { icon: <MdHotel size={15} style={{ color: T.sup }} />, term: 'المرافق المرخصة', simple: 'الفنادق والشقق الفندقية المشغّلة حالياً', detail: 'المنشآت الفندقية القائمة والحاصلة على تراخيص تشغيل سارية، وتمثّل الطاقة الفعلية الموجودة على أرض الواقع.' },
+                        { icon: <MdConstruction size={15} style={{ color: T.sup }} />, term: 'المشاريع المستقبلية', simple: 'المنشآت الفندقية قيد التطوير أو المخطط لها', detail: 'مشاريع الإيواء التي لم تدخل التشغيل بعد، وتُضاف إلى الطاقة الاستيعابية بحسب الجدول الزمني المتوقع لتشغيلها.' },
+                        { icon: <FaMosque size={14} style={{ color: T.sup }} />, term: 'مساكن الحجاج', simple: 'وحدات الإيواء المخصصة لموسم الحج', detail: 'وحدات سكنية مخصصة لاستضافة الحجاج خلال موسم الحج، وتشمل مختلف أنواع الوحدات السكنية المتاحة في مكة المكرمة.' },
+                      ].map(({ icon, term, simple, detail }) => (
+                        <div key={term} style={{
+                          background: 'rgba(65,64,66,0.02)',
+                          border: `1px solid ${T.sup}18`,
+                          borderRadius: 8, padding: '9px 12px',
+                          display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 9, alignItems: 'start',
+                          marginRight: 8,
+                        }}>
+                          <span style={{ lineHeight: 1, marginTop: 2 }}>{icon}</span>
+                          <div>
+                            <div style={{ fontSize: 11.5, fontWeight: 800, color: T.sup, marginBottom: 2 }}>{term}</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: T.txtSub, marginBottom: 3 }}>{simple}</div>
+                            <div style={{ fontSize: 10.5, color: T.txtDim, lineHeight: 1.7 }}>{detail}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── المستهدفات + أنواعها ── */}
+                  <div style={{
+                    border: `1px solid ${T.dem}33`,
+                    borderRadius: 12, overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      background: `${T.dem}0a`,
+                      padding: '12px 14px',
+                      borderBottom: `1px solid ${T.dem}22`,
+                      display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 11, alignItems: 'start',
+                    }}>
+                      <MdDiamond size={18} style={{ color: T.dem, marginTop: 2 }} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: T.dem, marginBottom: 3 }}>المستهدفات</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>إجمالي الطلب المتوقع على الإيواء</div>
+                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الحمل اليومي المتوقع على منظومة الإيواء، ويتكوّن من نوعين:</div>
+                      </div>
+                    </div>
+                    <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {[
+                        { icon: <MdDirectionsBus size={15} style={{ color: T.inside }} />, term: 'معتمري الداخل (مبيت)', color: T.inside, simple: 'المعتمرون المقيمون داخل المملكة الذين يبيتون ليلة أو أكثر', detail: 'المعتمرون القادمون من داخل المملكة ويحتاجون إلى إيواء لمدة ليلة واحدة أو أكثر أثناء أداء العمرة.' },
+                        { icon: <MdFlightTakeoff size={15} style={{ color: T.outside }} />, term: 'معتمري الخارج', color: T.outside, simple: 'المعتمرون القادمون من خارج المملكة', detail: 'المعتمرون الوافدون من خارج المملكة، ويكون متوسط إقامتهم أطول مقارنةً بمعتمري الداخل.' },
+                      ].map(({ icon, term, color, simple, detail }) => (
+                        <div key={term} style={{
+                          background: 'rgba(65,64,66,0.02)',
+                          border: `1px solid ${T.dem}18`,
+                          borderRadius: 8, padding: '9px 12px',
+                          display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 9, alignItems: 'start',
+                          marginRight: 8,
+                        }}>
+                          <span style={{ lineHeight: 1, marginTop: 2 }}>{icon}</span>
+                          <div>
+                            <div style={{ fontSize: 11.5, fontWeight: 800, color: color || T.dem, marginBottom: 2 }}>{term}</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: T.txtSub, marginBottom: 3 }}>{simple}</div>
+                            <div style={{ fontSize: 10.5, color: T.txtDim, lineHeight: 1.7 }}>{detail}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── الفجوة + أنواعها ── */}
+                  <div style={{
+                    border: '1px solid rgba(212,170,82,0.25)',
+                    borderRadius: 12, overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      background: 'rgba(212,170,82,0.06)',
+                      padding: '12px 14px',
+                      borderBottom: '1px solid rgba(212,170,82,0.18)',
+                      display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 11, alignItems: 'start',
+                    }}>
+                      <MdSwapHoriz size={18} style={{ color: 'rgba(212,170,82,0.8)', marginTop: 2 }} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: 'rgba(212,170,82,0.8)', marginBottom: 3 }}>الفجوة</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>الفرق بين الطاقة الاستيعابية والمستهدفات</div>
+                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الناتج اليومي من طرح المستهدفات من الطاقة الاستيعابية، ويظهر في حالتين:</div>
+                      </div>
+                    </div>
+                    <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {[
+                        { icon: <FiTrendingDown size={15} style={{ color: T.deficit }} />, term: 'العجز', color: T.deficit, simple: 'المستهدفات تتجاوز الطاقة الاستيعابية المتاحة', detail: 'حالة يتجاوز فيها الطلب على الإيواء السعة المتاحة، وكلما تكرر العجز زادت الحاجة للتدخل وزيادة المعروض.' },
+                        { icon: <FiTrendingUp size={15} style={{ color: T.surplus }} />, term: 'الفائض', color: T.surplus, simple: 'الطاقة الاستيعابية تتجاوز المستهدفات', detail: 'حالة تكون فيها السعة المتاحة أعلى من الطلب — قد يمثّل هامش أمان مقصوداً أو فرصة لتحسين الاستغلال.' },
+                      ].map(({ icon, term, color, simple, detail }) => (
+                        <div key={term} style={{
+                          background: 'rgba(65,64,66,0.02)',
+                          border: `1px solid ${color}18`,
+                          borderRadius: 8, padding: '9px 12px',
+                          display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 9, alignItems: 'start',
+                          marginRight: 8,
+                        }}>
+                          <span style={{ lineHeight: 1, marginTop: 2 }}>{icon}</span>
+                          <div>
+                            <div style={{ fontSize: 11.5, fontWeight: 800, color, marginBottom: 2 }}>{term}</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: T.txtSub, marginBottom: 3 }}>{simple}</div>
+                            <div style={{ fontSize: 10.5, color: T.txtDim, lineHeight: 1.7 }}>{detail}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* ══ TAB 3: الفرضيات ══ */}
+              {activeTab === 'assumptions' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                  {/* مقدمة */}
+                  <div style={{
+                    background: 'rgba(65,64,66,0.02)',
+                    border: '1px solid rgba(65,64,66,0.09)',
+                    borderRadius: 10, padding: '11px 13px',
+                    fontSize: 11.5, color: T.txtSub, lineHeight: 1.75,
+                  }}>
+                    {/* نطاق الدراسة */}
+                    <div style={{ fontSize: 11, fontWeight: 800, color: T.txt, marginBottom: 6 }}>
+                      نطاق الدراسة
+                    </div>
+                    <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 8, lineHeight: 1.6 }}>
+                      نطاق إيواء مكة المكرمة الذي تم دراسته
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {[
+                        'الفنادق في مكة المكرمة',
+                        'مساكن الحجاج في مكة المكرمة',
+                      ].map((t, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: T.txtDim }}>
+                          <span style={{
+                            width: 16, height: 16, borderRadius: 4,
+                            background: `${T.bronze}1a`, color: T.bronze,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 9, fontWeight: 800, flexShrink: 0,
+                          }}>{i + 1}</span>
+                          {t}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── معادلة الطلب (المستهدفات) ── */}
+                  <div style={{
+                    border: `1px solid ${T.dem}33`,
+                    borderRadius: 12, overflow: 'hidden',
+                    background: `${T.dem}05`,
+                  }}>
+                    <div style={{
+                      padding: '9px 13px',
+                      background: `${T.dem}12`,
+                      borderBottom: `1px solid ${T.dem}22`,
+                      display: 'flex', alignItems: 'center', gap: 7,
+                    }}>
+                      <MdDiamond size={14} style={{ color: T.dem }} />
+                      <span style={{ fontSize: 12, fontWeight: 900, color: T.dem }}>
+                        معادلة احتساب الطلب (المستهدفات)
+                      </span>
+                    </div>
+                    <div style={{ padding: '13px' }}>
+                      {/* المعادلة — responsive: stacked on mobile, grid on desktop */}
+                      <div className="formula-grid" style={{
+                        display: 'grid',
+                        gridTemplateColumns: '0.77fr auto 1fr auto 1fr',
+                        gap: 6, alignItems: 'stretch',
+                      }}>
+                        <div style={{
+                          background: `${T.dem}18`, color: T.dem,
+                          border: `1px solid ${T.dem}30`,
+                          borderRadius: 8, padding: '12px 8px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          textAlign: 'center', fontSize: 10.5, fontWeight: 800, lineHeight: 1.5,
+                        }}>
+                          إجمالي الطلب على إيواء مكة المكرمة
+                        </div>
+                        <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>=</div>
+                        <EquationBlock
+                          title="الحمل اليومي لمعتمري الداخل (مبيت)"
+                          color={T.dem}
+                          transparent
+                          rows={[
+                            { label: 'عدد المعتمرين المستهدفين', sub: '(معتمر)' },
+                            { label: 'متوسط الإقامة لمعتمري الداخل', sub: '(ليلة)' },
+                          ]}
+                        />
+                        <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>+</div>
+                        <EquationBlock
+                          title="الحمل اليومي لمعتمري الخارج"
+                          color={T.dem}
+                          transparent
+                          rows={[
+                            { label: 'عدد المعتمرين المستهدفين', sub: '(معتمر)' },
+                            { label: 'متوسط الإقامة لمعتمري الخارج', sub: '(ليلة)' },
+                          ]}
+                        />
+                      </div>
+                      <div style={{
+                        marginTop: 11, padding: '9px 11px',
+                        background: '#fff',
+                        border: '1px solid rgba(65,64,66,0.09)',
+                        borderRadius: 8,
+                        display: 'flex', gap: 8, alignItems: 'flex-start',
+                      }}>
+                        <FiInfo size={13} style={{ color: T.dem, marginTop: 2, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: T.txtSub, marginBottom: 3 }}>أبرز الملاحظات</div>
+                          <div style={{ fontSize: 10.5, color: T.txtDim, lineHeight: 1.7 }}>
+                            التغيير في متوسط عدد ليالي المبيت يؤثر على الحمل اليومي لقطاع الإيواء بالزيادة أو النقصان بشكل واضح.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── معادلة العرض (الطاقات الاستيعابية) ── */}
+                  <div style={{
+                    border: `1px solid ${T.sup}33`,
+                    borderRadius: 12, overflow: 'hidden',
+                    background: `${T.sup}05`,
+                  }}>
+                    <div style={{
+                      padding: '9px 13px',
+                      background: `${T.sup}12`,
+                      borderBottom: `1px solid ${T.sup}22`,
+                      display: 'flex', alignItems: 'center', gap: 7,
+                    }}>
+                      <MdHotel size={14} style={{ color: T.sup }} />
+                      <span style={{ fontSize: 12, fontWeight: 900, color: T.sup }}>
+                        معادلة احتساب الطاقات الاستيعابية
+                      </span>
+                    </div>
+                    <div style={{ padding: '13px' }}>
+                      <div className="formula-grid formula-grid-supply" style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1.1fr auto 0.7fr auto 1fr auto 1fr',
+                        gap: 6, alignItems: 'stretch',
+                      }}>
+                        <div style={{
+                          background: `${T.sup}18`, color: T.sup,
+                          border: `1px solid ${T.sup}30`,
+                          borderRadius: 8, padding: '12px 8px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          textAlign: 'center', fontSize: 10.5, fontWeight: 800, lineHeight: 1.5,
+                        }}>
+                          الطاقات الاستيعابية للإيواء في مكة المكرمة
+                        </div>
+                        <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>=</div>
+                        <div style={{
+                          background: 'rgba(65,64,66,0.06)',
+                          border: '1px solid rgba(65,64,66,0.12)',
+                          borderRadius: 8, padding: '10px 6px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          textAlign: 'center', fontSize: 10, fontWeight: 700, color: T.txtSub, lineHeight: 1.5,
+                        }}>
+                          نسبة الإشغال لمرافق الإيواء
+                        </div>
+                        <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>×</div>
+                        <EquationBlock
+                          title="عدد الأسرّة للمشاريع المستقبلية"
+                          color={T.sup}
+                          transparent
+                          rows={[
+                            { label: 'عدد الغرف', sub: '(غرفة / يوم)' },
+                            { label: 'متوسط عدد الأسرّة في الغرفة', sub: '(سرير / غرفة)' },
+                          ]}
+                        />
+
+                        <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>+</div>
+                        <EquationBlock
+                          title="عدد الأسرّة للمرافق المرخصة"
+                          color={T.sup}
+                          transparent
+                          rows={[
+                            { label: 'عدد الغرف', sub: '(غرفة / يوم)' },
+                            { label: 'متوسط عدد الأسرّة في الغرفة', sub: '(سرير / غرفة)' },
+                          ]}
+                        />
+                      </div>
+                      <div style={{
+                        marginTop: 11, padding: '9px 11px',
+                        background: '#fff',
+                        border: '1px solid rgba(65,64,66,0.09)',
+                        borderRadius: 8,
+                        display: 'flex', gap: 8, alignItems: 'flex-start',
+                      }}>
+                        <FiInfo size={13} style={{ color: T.sup, marginTop: 2, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: T.txtSub, marginBottom: 3 }}>أبرز الملاحظات</div>
+                          <div style={{ fontSize: 10.5, color: T.txtDim, lineHeight: 1.7 }}>
+                            تم الاستناد إلى أعداد الفنادق والشقق الفندقية المشغلة وغير المشغلة بحسب ما ورد في خطة زيادة المعروض 2023 من وزارة السياحة.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── أبرز الفرضيات (القيم) ── */}
+                  <div style={{
+                    border: '1px solid rgba(65,64,66,0.12)',
+                    borderRadius: 12, overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      padding: '9px 13px',
+                      background: 'rgba(65,64,66,0.04)',
+                      borderBottom: '1px solid rgba(65,64,66,0.09)',
+                      display: 'flex', alignItems: 'center', gap: 7,
+                    }}>
+                      <FaMosque size={13} style={{ color: T.bronze }} />
+                      <span style={{ fontSize: 12, fontWeight: 900, color: T.txt }}>
+                        أبرز الفرضيات لعام 2026
+                      </span>
+                    </div>
+                    <div style={{ padding: '13px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+
+                      {/* الطاقات الاستيعابية */}
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: T.sup, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <MdHotel size={13} /> الطاقات الاستيعابية
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+                          {[
+                            { v: '200,057', u: 'غرفة / اليوم', l: 'الفنادق والشقق الفندقية' },
+                            { v: '1,700,000', u: 'سرير / اليوم', l: 'وحدات مساكن الحجاج' },
+                          ].map((k, i) => (
+                            <div key={i} style={{
+                              background: T.supBg,
+                              border: `1px solid ${T.sup}22`,
+                              borderRadius: 8, padding: '10px 11px',
+                            }}>
+                              <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 4, lineHeight: 1.4 }}>{k.l}</div>
+                              <div style={{ fontSize: 16, fontWeight: 900, color: T.sup, lineHeight: 1.1 }}>
+                                {k.v} <span style={{ fontSize: 10, fontWeight: 600, color: T.txtSub }}>{k.u}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* المستهدفات */}
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: T.dem, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <MdDiamond size={13} /> المستهدفات
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 }}>
+                          {[
+                            { v: '100%', l: 'نسبة المعتمرين المستهدفين في الإيواء' },
+                            { v: '9.3', u: 'ليال', l: 'متوسط الإقامة لمعتمري الخارج' },
+                            { v: '3.3', u: 'ليال', l: 'متوسط الإقامة لمعتمري الداخل' },
+                          ].map((k, i) => (
+                            <div key={i} style={{
+                              background: T.demBg,
+                              border: `1px solid ${T.dem}22`,
+                              borderRadius: 8, padding: '10px 11px',
+                            }}>
+                              <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 4, lineHeight: 1.4 }}>{k.l}</div>
+                              <div style={{ fontSize: 16, fontWeight: 900, color: T.dem, lineHeight: 1.1 }}>
+                                {k.v}{k.u && <span style={{ fontSize: 10, fontWeight: 600, color: T.txtSub }}> {k.u}</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* عدد الأسرّة */}
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: T.txtSub, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <MdBed size={13} /> عدد الأسرّة
+                        </div>
+                        <div style={{
+                          background: 'rgba(65,64,66,0.03)',
+                          border: '1px solid rgba(65,64,66,0.10)',
+                          borderRadius: 8, padding: '10px 11px',
+                        }}>
+                          <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 4 }}>متوسط عدد الأسرّة في الغرفة خارج موسم الحج</div>
+                          <div style={{ fontSize: 18, fontWeight: 900, color: T.txt, lineHeight: 1.1 }}>
+                            3.1 <span style={{ fontSize: 10, fontWeight: 600, color: T.txtSub }}>سرير / غرفة</span>
+                          </div>
+                        </div>
+                        <div style={{
+                          background: 'rgba(65,64,66,0.03)',
+                          border: '1px solid rgba(65,64,66,0.10)',
+                          borderRadius: 8, padding: '10px 11px', marginTop: '5px'
+                        }}>
+                          <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 4 }}>متوسط عدد الأسرّة في الغرفة خلال موسم الحج</div>
+                          <div style={{ fontSize: 18, fontWeight: 900, color: T.txt, lineHeight: 1.1 }}>
+                            4.3 <span style={{ fontSize: 10, fontWeight: 600, color: T.txtSub }}>سرير / غرفة</span>
+                          </div>
+
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
                 </div>
               )}
 
@@ -1985,7 +2576,7 @@ function Dashboard({ db, fileDate }) {
     const avgD = v.reduce((s, r) => s + r.demand, 0) / v.length
     const avgS = v.reduce((s, r) => s + r.supply, 0) / v.length
     const defD = v.filter(r => r.gap < 0).length
-    const criticalDays = v.filter(r => r.demand >= 0.9 * r.supply).length
+    const criticalDays = v.filter(r => r.demand >= 0.8 * r.supply).length
     const criticalPct = Math.round(criticalDays / v.length * 100)
     const peakOccRow = v.reduce((m, r) => (r.demand / r.supply) > (m.demand / m.supply) ? r : m, v[0])
     const peakOccPct = Math.round(peakOccRow.demand / peakOccRow.supply * 100)
@@ -2149,7 +2740,14 @@ function Dashboard({ db, fileDate }) {
     [...yrs].sort().map(y => refB(HAJJ[y])).filter(Boolean),
     [yrs, series])
 
-  const xTick = k => { const d = series.find(x => x.dateKey === k); return d?.date.getDate() === 1 ? AR_MON[d.date.getMonth()] : '' }
+  const xTick = k => {
+    const d = series.find(x => x.dateKey === k)
+    if (!d || d.date.getDate() !== 1) return ''
+    // Multi-year view: show the year number at each January 1st tick
+    if (yrs.size >= 2) return d.date.getMonth() === 0 ? String(d.date.getFullYear()) : ''
+    // Single-year view: show Arabic month name at each month start
+    return AR_MON[d.date.getMonth()]
+  }
   const xInt = Math.max(0, Math.floor(series.length / 13) - 1)
 
   const exportXLSX = () => {
@@ -2395,7 +2993,7 @@ function Dashboard({ db, fileDate }) {
               <div className="span-full mini-charts-trio">
                 <DonutChart donut={mini.donut} defPct={mini.defPct} />
                 <MonthlyBarChart monthly={mini.monthly} monthlyHijri={mini.monthlyHijri} defPct={mini.defPct} series={series} yrs={yrs} />
-                <DemandSplitChart split={mini.split} />
+                <SeasonalRadialBar seasonal={mini.seasonal} />
               </div>
             )}
 
@@ -2491,8 +3089,8 @@ function Dashboard({ db, fileDate }) {
                 {/* Top 3-col row */}
                 <div className="analysis-top-row">
 
-                  {/* Col 1: حالات العجز حسب الموسم */}
-                  <SeasonalRadialBar seasonal={mini.seasonal} />
+                  {/* Col 1: الفئات من المستهدفات */}
+                  <DemandSplitChart split={mini.split} />
 
                   {/* Col 2: رمضان carousel */}
                   <RamadanCarousel periods={ram.perPeriod ?? []} ram={ram} T={T} />
@@ -2576,6 +3174,7 @@ function Dashboard({ db, fileDate }) {
                           <div style={{ height: 5, borderRadius: 5, background: 'rgba(65,64,66,0.08)', overflow: 'hidden' }}>
                             <div style={{ height: '100%', borderRadius: 5, width: `${Math.min(fillPct, 100)}%`, background: fillPct >= 100 ? `linear-gradient(to left,${T.surplus},${T.surplus}aa)` : `linear-gradient(to left,${T.deficit}dd,${T.deficit}88)`, transition: 'width .9s cubic-bezier(.4,0,.2,1)' }} />
                           </div>
+
                         </div>
                       </div>
                     )
