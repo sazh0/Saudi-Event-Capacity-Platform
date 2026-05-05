@@ -1226,7 +1226,6 @@ function LoadingScreen() {
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 20, fontWeight: 800, color: T.txt }}>جاري تحميل البيانات</div>
-        <div style={{ fontSize: 13, color: T.txtSub, marginTop: 5 }}>housing.xlsx</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, width: '100%', maxWidth: 500 }}>
         {Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ height: 60 }} />)}

@@ -503,25 +503,32 @@
 
 /* ════════════════════════════════════════════════════════════════
    RESPONSIVE — MOBILE (iPhone)
+   On mobile, the map fits the viewport width (no horizontal scroll).
+   SVG side cards are replaced by HTML-based MobileCardList below
+   the map, so the SVG min-width override is removed.
 ════════════════════════════════════════════════════════════════ */
-@media (max-width: 600px) {
+@media (max-width: 767px) {
+
+  /* ── Page header ── */
   .exec-page-header-hero {
-    margin-top: -46px;
+    margin-top: 30px;
     padding-top: 72px;
+    margin-bottom: 4px;
   }
 
   .exec-page-header-inner {
-    padding: 16px 12px 0;
+    padding: 14px 14px 0;
   }
 
   .exec-page-header-h1 {
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1.3;
   }
 
   .exec-page-header-subtitle {
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.5;
+    padding: 0 20px;
   }
 
   .exec-page-header-chips {
@@ -535,27 +542,37 @@
     gap: 4px;
   }
 
+  /* ── Content area ── */
   .exec-content {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
+  /* ── Filter bar ── */
   .exec-filter-bar {
-    padding: 10px 12px;
+    padding: 10px 10px;
     gap: 8px;
     border-radius: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     flex-direction: column;
   }
 
   .exec-filter-row {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .exec-filter-row::-webkit-scrollbar {
+    display: none;
   }
 
   .exec-filter-label {
     font-size: 10px;
-    min-width: 32px;
+    min-width: 28px;
+    flex-shrink: 0;
   }
 
   .exec-filter-chips {
@@ -565,18 +582,22 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     flex-wrap: nowrap;
+    min-width: 0;
+    flex: 1;
   }
+
 
   .exec-filter-chips::-webkit-scrollbar {
     display: none;
   }
 
   .exec-f-chip {
-    padding: 7px 12px;
+    padding: 7px 13px;
     font-size: 11px;
     flex-shrink: 0;
   }
 
+  /* ── KPI cards ── */
   .exec-kpi-row {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
@@ -591,10 +612,11 @@
 
   .exec-kpi-card:hover {
     transform: none;
+    box-shadow: 0 2px 12px rgba(65, 64, 66, 0.06);
   }
 
   .exec-kpi-value {
-    font-size: 21px;
+    font-size: 22px;
   }
 
   .exec-kpi-label {
@@ -609,13 +631,15 @@
     margin-bottom: 6px;
   }
 
+  /* ── Map — fits viewport, NO horizontal scroll ── */
   .exec-map-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
+    -webkit-overflow-scrolling: auto;
   }
 
   .exec-map-svg {
-    min-width: 1100px;
+    min-width: 0;
+    width: 100%;
   }
 }
 
@@ -635,6 +659,231 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
+   MOBILE CARD LIST — HTML replacement for SVG side cards
+════════════════════════════════════════════════════════════════ */
+.exec-mob-list {
+  margin-top: 4px;
+  margin-bottom: 20px;
+  animation: mob-list-in 0.35s ease both;
+}
+
+@keyframes mob-list-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.exec-mob-list-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
+.exec-mob-list-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.exec-mob-list-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #414042;
+}
+
+.exec-mob-list-count {
+  font-size: 11px;
+  color: rgba(65, 64, 66, 0.45);
+  font-weight: 600;
+  margin-right: auto;
+}
+
+.exec-mob-list-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 400px) {
+  .exec-mob-list-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Individual mobile card ── */
+.exec-mobile-card {
+  position: relative;
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(65, 64, 66, 0.07);
+  box-shadow: 0 2px 10px rgba(65, 64, 66, 0.07);
+  overflow: hidden;
+  animation: mob-card-in 0.4s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: calc(var(--i, 0) * 0.04s);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.22s ease;
+}
+
+.exec-mobile-card:active {
+  box-shadow: 0 1px 4px rgba(65, 64, 66, 0.10);
+}
+
+@keyframes mob-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.exec-mobile-card-hl {
+  box-shadow: 0 0 0 2px var(--sec-color, #967126), 0 4px 16px rgba(150, 113, 38, 0.18);
+  animation: mob-card-in 0.4s cubic-bezier(0.32, 0.72, 0, 1) both,
+    mob-attention 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+
+@keyframes mob-attention {
+  0% {
+    transform: scale(1);
+  }
+
+  25% {
+    transform: scale(1.03);
+  }
+
+  55% {
+    transform: scale(0.99);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── Accent bar ── */
+.exec-mob-accent {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  width: 3px;
+  height: calc(100% - 24px);
+  border-radius: 0 3px 3px 0;
+  opacity: 0.55;
+}
+
+/* ── Header ── */
+.exec-mob-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.exec-mob-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #414042;
+  font-family: "BahijTheSansArabic", sans-serif;
+}
+
+.exec-mob-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-family: "Cairo", "BahijTheSansArabic", sans-serif;
+}
+
+.exec-mob-badge.def {
+  color: #b85c4e;
+  background: rgba(184, 92, 78, 0.08);
+  border: 1px solid rgba(184, 92, 78, 0.15);
+}
+
+.exec-mob-badge.sur {
+  color: #007a53;
+  background: rgba(0, 122, 83, 0.08);
+  border: 1px solid rgba(0, 122, 83, 0.15);
+}
+
+/* ── Gauge ── */
+.exec-mob-gauge-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 0;
+}
+
+.exec-mob-gauge-svg {
+  width: 120px;
+  height: 70px;
+}
+
+/* ── Divider ── */
+.exec-mob-divider {
+  height: 1px;
+  background: rgba(65, 64, 66, 0.06);
+  margin: 6px 0 8px;
+}
+
+/* ── Metrics ── */
+.exec-mob-metrics {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.exec-mob-metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.exec-mob-metric-lbl {
+  font-size: 8px;
+  font-weight: 600;
+  color: #75787b;
+  font-family: "BahijTheSansArabic", sans-serif;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.exec-mob-metric-val {
+  font-size: 14px;
+  font-weight: 900;
+  color: #414042;
+  font-family: "Cairo", sans-serif;
+  line-height: 1;
+}
+
+.exec-mob-metric-sep {
+  width: 1px;
+  background: rgba(65, 64, 66, 0.06);
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════
    TOUCH INTERACTIONS
 ════════════════════════════════════════════════════════════════ */
 @media (hover: none) and (pointer: coarse) {
@@ -649,7 +898,8 @@
   }
 
   .exec-f-chip,
-  .exec-kpi-card {
+  .exec-kpi-card,
+  .exec-mobile-card {
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(150, 113, 38, 0.15);
   }
