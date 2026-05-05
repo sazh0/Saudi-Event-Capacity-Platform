@@ -274,6 +274,18 @@ function Navbar({ scrolled, navigate }) {
                 fontSize: 13, fontWeight: 700, cursor: 'pointer',
               }}
             >الصفحة الرئيسية</button>
+            <button
+              onClick={() => { navigate('/executive'); setMOpen(false) }}
+              style={{
+                flex: 1, padding: '10px', background: `${C.bronze}28`, color: C.bronzeXL,
+                border: `1px solid ${C.bronze}40`, borderRadius: 8, fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="8" width="3.5" height="6" rx="1" fill="currentColor" /><rect x="6.25" y="5" width="3.5" height="9" rx="1" fill="currentColor" /><rect x="11.5" y="2" width="3.5" height="12" rx="1" fill="currentColor" /></svg>
+              لوحة المؤشرات التنفيذية
+            </button>
           </div>
         </div>
       )}
@@ -1025,6 +1037,53 @@ export default function TouchpointsPage() {
 
           {/* ── CITY SELECTOR ── */}
           <CitySelector filter={filter} setFilter={setFilter} />
+
+          {/* ── Executive Dashboard CTA ── */}
+          <div style={{ animation: 'heroFadeUp .55s .34s ease both' }}>
+            <button
+              onClick={() => navigate('/executive')}
+              className="tp-exec-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 9,
+                padding: '11px 28px',
+                borderRadius: 10,
+                fontSize: 13.5,
+                fontWeight: 800,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                color: '#F4F1EB',
+                background: 'linear-gradient(135deg, rgba(150,113,38,0.22) 0%, rgba(150,113,38,0.10) 100%)',
+                border: '1px solid rgba(212,170,82,0.30)',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '0 4px 20px rgba(150,113,38,0.12), inset 0 1px 0 rgba(255,255,255,0.06)',
+                transition: 'all 0.25s ease',
+                letterSpacing: 0.2,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(150,113,38,0.35) 0%, rgba(150,113,38,0.18) 100%)'
+                e.currentTarget.style.borderColor = 'rgba(212,170,82,0.55)'
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(150,113,38,0.22), inset 0 1px 0 rgba(255,255,255,0.08)'
+                e.currentTarget.style.transform = 'translateY(-2px)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(150,113,38,0.22) 0%, rgba(150,113,38,0.10) 100%)'
+                e.currentTarget.style.borderColor = 'rgba(212,170,82,0.30)'
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(150,113,38,0.12), inset 0 1px 0 rgba(255,255,255,0.06)'
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
+              onMouseDown={e => { e.currentTarget.style.transform = 'translateY(0) scale(0.98)' }}
+              onMouseUp={e => { e.currentTarget.style.transform = 'translateY(-2px) scale(1)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                <rect x="1" y="8" width="3.5" height="6" rx="1" fill="#D4AA52" fillOpacity="0.8" />
+                <rect x="6.25" y="5" width="3.5" height="9" rx="1" fill="#D4AA52" />
+                <rect x="11.5" y="2" width="3.5" height="12" rx="1" fill="#D4AA52" fillOpacity="0.6" />
+              </svg>
+              لوحة المؤشرات التنفيذية
+            </button>
+          </div>
 
         </div>
       </div>

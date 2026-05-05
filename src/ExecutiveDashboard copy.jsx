@@ -21,9 +21,33 @@ const YEARS = [2026, 2027, 2028, 2029, 2030]
 const fmtN = n => {
   if (n == null || isNaN(n)) return '—'
   const a = Math.abs(n)
-  if (a >= 1e6) return `${(n / 1e6).toFixed(3)} م`
-  if (a >= 1e3) return `${(n / 1e3).toFixed(2)} ألف`
+  if (a >= 1e6) return `${(n / 1e6).toFixed(2)} م`
+  if (a >= 1e3) return `${(n / 1e3).toFixed(1)} ألف`
   return Math.round(n).toLocaleString('en-US').replace(/,/g, '،')
+}
+
+/* ═══ ANIMATED NUMBER HOOK ═══ */
+function useAnimatedNumber(target, duration = 600) {
+  const [display, setDisplay] = useState(target)
+  const rafRef = useRef(null)
+  const fromRef = useRef(target)
+  useEffect(() => {
+    const from = fromRef.current
+    if (from === target) return
+    const startTime = performance.now()
+    const animate = now => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(from + (target - from) * eased))
+      if (progress < 1) rafRef.current = requestAnimationFrame(animate)
+      else fromRef.current = target
+    }
+    rafRef.current = requestAnimationFrame(animate)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [target, duration])
+  useEffect(() => { fromRef.current = target }, []) // eslint-disable-line
+  return display
 }
 
 const SECTIONS = [
@@ -263,6 +287,7 @@ function computeViewBoxHeight(sectionId) {
   return Math.max(MAP_BASE_H, CARD_PAD_TOP + maxCards * CARD_H + (maxCards - 1) * CARD_GAP + CARD_PAD_BOT)
 }
 
+
 /* ═══ MAP CANVAS ═══ */
 function MapCanvas({ selected, onSelect, onDeselect, sectionFilter, yearlyData, highlightedId, svgRef }) {
   const [hovered, setHovered] = useState(null)
@@ -275,6 +300,9 @@ function MapCanvas({ selected, onSelect, onDeselect, sectionFilter, yearlyData, 
     return { s, d, gap: s - d, status: (s - d) >= 0 ? 'surplus' : 'deficit' }
   }, [yearlyData])
   const vbH = computeViewBoxHeight(sectionFilter)
+
+  const hoveredPin = hovered ? TOUCHPOINTS.find(t => t.id === hovered) : null
+  const hoveredStats = hoveredPin ? getStats(hoveredPin) : null
 
   return (
     <svg ref={svgRef} viewBox={`${VB_X} 0 ${VB_W} ${vbH}`} className="exec-map-svg" onClick={onDeselect}>
@@ -297,7 +325,11 @@ function MapCanvas({ selected, onSelect, onDeselect, sectionFilter, yearlyData, 
         const r = isSelected ? 8 : isHovered ? 7 : 5
         return (
           <g key={pin.id} onClick={e => { e.stopPropagation(); onSelect(pin.id) }}
-            onMouseEnter={() => setHovered(pin.id)} onMouseLeave={() => setHovered(null)} style={{ cursor: 'pointer' }}>
+            onMouseEnter={() => setHovered(pin.id)} onMouseLeave={() => setHovered(null)}
+            onFocus={() => setHovered(pin.id)} onBlur={() => setHovered(null)}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onSelect(pin.id) } }}
+            tabIndex={0} role="button" aria-label={`${pin.label} — ${status === 'deficit' ? 'عجز' : 'فائض'}`}
+            style={{ cursor: 'pointer', outline: 'none' }}>
             {status === 'deficit' && !isSelected && (
               <circle cx={pin.x} cy={pin.y} r={r + 5} fill="none" stroke={T.deficit} strokeWidth={1} opacity={0.35}>
                 <animate attributeName="r" from={r + 2} to={r + 14} dur="2.5s" repeatCount="indefinite" />
@@ -313,6 +345,16 @@ function MapCanvas({ selected, onSelect, onDeselect, sectionFilter, yearlyData, 
                   from={`0 ${pin.x} ${pin.y}`} to={`360 ${pin.x} ${pin.y}`} dur="10s" repeatCount="indefinite" />
               </circle>
             )}
+            {/* ═══ Pin label ═══ */}
+            <text x={pin.x} y={pin.y - (isSelected ? 14 : 10)} textAnchor="middle"
+              fill={isHovered || isSelected ? T.txt : T.txtSub}
+              fontSize={isHovered || isSelected ? 10 : 8.5}
+              fontWeight={isHovered || isSelected ? 700 : 600}
+              fontFamily="'BahijTheSansArabic',sans-serif"
+              opacity={isHovered || isSelected ? 1 : 0.7}
+              style={{ transition: 'font-size 0.2s, opacity 0.2s' }}>
+              {pin.label}
+            </text>
           </g>
         )
       })}
@@ -320,8 +362,19 @@ function MapCanvas({ selected, onSelect, onDeselect, sectionFilter, yearlyData, 
   )
 }
 
-/* ═══ KPI CARD — with animated map indicator ═══ */
-function KpiCard({ label, value, sub, color, indicator }) {
+/* ═══ KPI CARD — with animated values and empty state ═══ */
+function AnimatedKpiValue({ value, color }) {
+  const isNumeric = typeof value === 'number'
+  const animated = useAnimatedNumber(isNumeric ? value : 0)
+  return (
+    <div className="exec-kpi-value" style={{ color }}>
+      {isNumeric ? animated : value}
+    </div>
+  )
+}
+
+function KpiCard({ label, value, sub, color, indicator, emptyMsg }) {
+  const isEmpty = value === '—' || value === 0 || value === '0'
   return (
     <div className="exec-kpi-card" style={{ borderTopColor: color }}>
       <div className="exec-kpi-header">
@@ -339,8 +392,16 @@ function KpiCard({ label, value, sub, color, indicator }) {
           </span>
         )}
       </div>
-      <div className="exec-kpi-value" style={{ color }}>{value}</div>
-      {sub && <div className="exec-kpi-sub">{sub}</div>}
+      {typeof value === 'number' ? (
+        <AnimatedKpiValue value={value} color={color} />
+      ) : (
+        <div className="exec-kpi-value" style={{ color }}>{value}</div>
+      )}
+      {isEmpty && emptyMsg ? (
+        <div className="exec-kpi-sub" style={{ color: T.txtDim, fontStyle: 'italic' }}>{emptyMsg}</div>
+      ) : sub ? (
+        <div className="exec-kpi-sub">{sub}</div>
+      ) : null}
     </div>
   )
 }
@@ -352,8 +413,8 @@ function ExecPageHeader({ yearLabel, sectionLabel }) {
       <div className="exec-page-header-inner">
         <div className="exec-page-header-top">
           <div className="exec-page-header-title-block">
-            <h1 className="exec-page-header-h1">اللوحة التنفيذية</h1>
-            <p className="exec-page-header-subtitle">المنصة الوطنية لدراسات الطاقة الاستيعابية — نظرة شاملة على جميع نقاط الاتصال</p>
+            <h1 className="exec-page-header-h1">لوحة المؤشرات التنفيذية</h1>
+            <p className="exec-page-header-subtitle">رؤية استراتيجية شاملة للطاقة الاستيعابية عبر جميع نقاط الاتصال لرحلة ضيوف الرحمن</p>
           </div>
         </div>
       </div>
@@ -394,6 +455,18 @@ function FilterBar({ yrs, toggleYr, selectAllYrs, isAllYrs, activeSection, onSec
 export default function ExecutiveDashboard() {
   const navigate = useNavigate()
   useEffect(() => { injectNavStyles() }, [])
+  useEffect(() => {
+    if (!document.getElementById('exec-tooltip-styles')) {
+      const style = document.createElement('style')
+      style.id = 'exec-tooltip-styles'
+      style.textContent = `
+        @keyframes tooltipFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .exec-map-svg g[tabindex="0"]:focus > circle { stroke-width: 2.5; }
+        .exec-map-svg g[tabindex="0"]:focus { outline: none; }
+      `
+      document.head.appendChild(style)
+    }
+  }, [])
 
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -501,9 +574,9 @@ export default function ExecutiveDashboard() {
         <FilterBar yrs={yrs} toggleYr={toggleYr} selectAllYrs={selectAll} isAllYrs={isAll} activeSection={sectionFilter} onSection={handleSection} />
         {kpis && (
           <div className="exec-kpi-row">
-            <KpiCard label="نقاط العجز" value={kpis.defCount} sub={`من ${kpis.total} نقطة`} color={T.deficit} indicator />
-            <KpiCard label="نقاط الفائض" value={kpis.surCount} sub={`من ${kpis.total} نقطة`} color={T.surplus} indicator />
-            <KpiCard label="أكبر عجز" value={kpis.worst?.gap < 0 ? fmtN(Math.abs(kpis.worst.gap)) : '—'} sub={kpis.worst?.label} color={T.deficit} />
+            <KpiCard label="نقاط العجز" value={kpis.defCount} sub={`من ${kpis.total} نقطة`} color={T.deficit} indicator emptyMsg="لا يوجد عجز حالياً" />
+            <KpiCard label="نقاط الفائض" value={kpis.surCount} sub={`من ${kpis.total} نقطة`} color={T.surplus} indicator emptyMsg="لا يوجد فائض حالياً" />
+            <KpiCard label="أكبر عجز" value={kpis.worst?.gap < 0 ? fmtN(Math.abs(kpis.worst.gap)) : '—'} sub={kpis.worst?.gap < 0 ? kpis.worst.label : undefined} color={T.deficit} emptyMsg="جميع النقاط ضمن الطاقة" />
             <KpiCard label="نسبة التغطية" value={`${kpis.covPct}%`} sub="إجمالي طاقة / مستهدفات" color={T.gold} />
           </div>
         )}

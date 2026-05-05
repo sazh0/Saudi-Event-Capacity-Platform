@@ -1156,3 +1156,15 @@
     animation: none !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   EXECUTIVE DASHBOARD BUTTON
+══════════════════════════════════════════════════════════════════ */
+.tp-exec-btn:focus-visible {
+  outline: 2px solid #967126;
+  outline-offset: 3px;
+}
+
+.tp-exec-btn:active {
+  transform: translateY(0) scale(0.98) !important;
+}

@@ -96,9 +96,8 @@ const TOUCHPOINTS = [
 ]
 
 /* ═══ LAYOUT ═══ */
-const SIDE_W = 700
-const VB_X = -SIDE_W
-const VB_W = 1000 + SIDE_W * 2
+const SIDE_W_1COL = 700
+const SIDE_W_2COL = 380 * 2 + 14 + 60
 const MAP_BASE_H = 900
 const CARD_W = 380, CARD_H = 230, CARD_GAP = 14
 const CARD_PAD_TOP = 28, CARD_PAD_BOT = 28
@@ -106,6 +105,7 @@ const L_CARD_X = -CARD_W - 40
 const R_CARD_X = 1000 + 40
 const L_ARROW_END = L_CARD_X + CARD_W
 const R_ARROW_END = R_CARD_X
+const COL2_THRESHOLD = 3
 
 /* ═══ SEMI-GAUGE — light-theme track ═══ */
 let _gid = 0
@@ -235,14 +235,36 @@ function SideChartsLayer({ sectionId, yearlyData, highlightedId }) {
   leftTPs.sort((a, b) => a.y - b.y)
   rightTPs.sort((a, b) => a.y - b.y)
 
-  const spaceCards = list => {
+  const spaceCards = (list, side) => {
     const startY = CARD_PAD_TOP
-    return list.map((tp, i) => ({ ...tp, cardY: startY + i * (CARD_H + CARD_GAP) }))
+    const use2Col = list.length > COL2_THRESHOLD
+
+    if (!use2Col) {
+      const baseX = side === 'left' ? L_CARD_X : R_CARD_X
+      return list.map((tp, i) => ({ ...tp, cardX: baseX, cardY: startY + i * (CARD_H + CARD_GAP) }))
+    }
+
+    return list.map((tp, i) => {
+      const row = Math.floor(i / 2)
+      const col = i % 2
+      const cardY = startY + row * (CARD_H + CARD_GAP)
+      let cardX
+      if (side === 'left') {
+        cardX = col === 0
+          ? -(2 * CARD_W + CARD_GAP + 40)
+          : -(CARD_W + 40)
+      } else {
+        cardX = col === 0
+          ? 1000 + 40
+          : 1000 + 40 + CARD_W + CARD_GAP
+      }
+      return { ...tp, cardX, cardY }
+    })
   }
 
   /* Tighter arrow curves */
-  const arrowPath = (pin, cardY, side) => {
-    const ex = side === 'left' ? L_ARROW_END : R_ARROW_END
+  const arrowPath = (pin, cardX, cardY, side) => {
+    const ex = side === 'left' ? cardX + CARD_W : cardX
     const ey = cardY + CARD_H / 2
     const dx = Math.abs(pin.x - ex)
     return side === 'left'
@@ -252,39 +274,50 @@ function SideChartsLayer({ sectionId, yearlyData, highlightedId }) {
 
   const renderSide = (list, side) => list.map((tp, i) => {
     const delay = i * 0.06
-    const cx = side === 'left' ? L_CARD_X : R_CARD_X
-    const ex = side === 'left' ? L_ARROW_END : R_ARROW_END
+    const ex = side === 'left' ? tp.cardX + CARD_W : tp.cardX
     const ey = tp.cardY + CARD_H / 2
     return (
       <g key={tp.id}>
-        <path d={arrowPath(tp, tp.cardY, side)} fill="none" stroke={sec.color} strokeWidth={1} opacity={0.35}
+        <path d={arrowPath(tp, tp.cardX, tp.cardY, side)} fill="none" stroke={sec.color} strokeWidth={1} opacity={0.35}
           className="exec-arrow-line" style={{ '--a-delay': `${delay}s` }} />
         <circle cx={ex} cy={ey} r={2.5} fill={sec.color} className="exec-arrow-dot" style={{ '--d-delay': `${delay + 0.4}s` }} />
         <circle cx={tp.x} cy={tp.y} r={9} fill="none" stroke={sec.color} strokeWidth={0.8}
           opacity={0} className="exec-pin-ring" style={{ '--r-delay': `${delay}s` }} />
-        <SideCard x={cx} y={tp.cardY} tp={tp} secColor={sec.color} delay={delay} isHighlighted={highlightedId === tp.id} />
+        <SideCard x={tp.cardX} y={tp.cardY} tp={tp} secColor={sec.color} delay={delay} isHighlighted={highlightedId === tp.id} />
       </g>
     )
   })
 
   return (
     <g className="exec-side-charts">
-      {renderSide(spaceCards(leftTPs), 'left')}
-      {renderSide(spaceCards(rightTPs), 'right')}
+      {renderSide(spaceCards(leftTPs, 'left'), 'left')}
+      {renderSide(spaceCards(rightTPs, 'right'), 'right')}
     </g>
   )
 }
 
-/* ═══ Dynamic viewBox height ═══ */
-function computeViewBoxHeight(sectionId) {
-  if (!sectionId) return MAP_BASE_H
+/* ═══ Dynamic viewBox dimensions ═══ */
+function computeSideWidth(sectionId) {
+  if (!sectionId) return SIDE_W_1COL
   const tps = TOUCHPOINTS.filter(tp => tp.section === sectionId)
   const MID = 500
   let leftCount = tps.filter(tp => tp.x < MID).length
   let rightCount = tps.filter(tp => tp.x >= MID).length
   if (!leftCount || !rightCount) { leftCount = Math.ceil(tps.length / 2); rightCount = tps.length - leftCount }
-  const maxCards = Math.max(leftCount, rightCount)
-  return Math.max(MAP_BASE_H, CARD_PAD_TOP + maxCards * CARD_H + (maxCards - 1) * CARD_GAP + CARD_PAD_BOT)
+  return (leftCount > COL2_THRESHOLD || rightCount > COL2_THRESHOLD) ? SIDE_W_2COL : SIDE_W_1COL
+}
+
+function computeViewBoxHeight(sectionId) {
+  if (!sectionId) return MAP_BASE_H
+  const tps = TOUCHPOINTS.filter(tp => tp.section === sectionId)
+  const MID = 600
+  let leftCount = tps.filter(tp => tp.x < MID).length
+  let rightCount = tps.filter(tp => tp.x >= MID).length
+  if (!leftCount || !rightCount) { leftCount = Math.ceil(tps.length / 2); rightCount = tps.length - leftCount }
+  const leftRows = leftCount > COL2_THRESHOLD ? Math.ceil(leftCount / 2) : leftCount
+  const rightRows = rightCount > COL2_THRESHOLD ? Math.ceil(rightCount / 2) : rightCount
+  const maxRows = Math.max(leftRows, rightRows)
+  return Math.max(MAP_BASE_H, CARD_PAD_TOP + maxRows * CARD_H + (maxRows - 1) * CARD_GAP + CARD_PAD_BOT)
 }
 
 
@@ -300,12 +333,15 @@ function MapCanvas({ selected, onSelect, onDeselect, sectionFilter, yearlyData, 
     return { s, d, gap: s - d, status: (s - d) >= 0 ? 'surplus' : 'deficit' }
   }, [yearlyData])
   const vbH = computeViewBoxHeight(sectionFilter)
+  const sideW = computeSideWidth(sectionFilter)
+  const vbX = -sideW
+  const vbW = 1000 + sideW * 2
 
   const hoveredPin = hovered ? TOUCHPOINTS.find(t => t.id === hovered) : null
   const hoveredStats = hoveredPin ? getStats(hoveredPin) : null
 
   return (
-    <svg ref={svgRef} viewBox={`${VB_X} 0 ${VB_W} ${vbH}`} className="exec-map-svg" onClick={onDeselect}>
+    <svg ref={svgRef} viewBox={`${vbX} 0 ${vbW} ${vbH}`} className="exec-map-svg" onClick={onDeselect}>
       <defs>
         <radialGradient id="gMk" cx="351" cy="535" r="90" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={T.gold} stopOpacity="0.18" /><stop offset="100%" stopColor={T.gold} stopOpacity="0" />
@@ -413,8 +449,8 @@ function ExecPageHeader({ yearLabel, sectionLabel }) {
       <div className="exec-page-header-inner">
         <div className="exec-page-header-top">
           <div className="exec-page-header-title-block">
-            <h1 className="exec-page-header-h1">اللوحة التنفيذية</h1>
-            <p className="exec-page-header-subtitle">المنصة الوطنية لدراسات الطاقة الاستيعابية — نظرة شاملة على جميع نقاط الاتصال</p>
+            <h1 className="exec-page-header-h1">لوحة المؤشرات التنفيذية</h1>
+            <p className="exec-page-header-subtitle">رؤية استراتيجية شاملة للطاقة الاستيعابية عبر جميع نقاط الاتصال لرحلة ضيوف الرحمن</p>
           </div>
         </div>
       </div>
