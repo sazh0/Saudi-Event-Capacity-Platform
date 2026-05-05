@@ -75,42 +75,42 @@ const ring = (cx, cy, r, i, n) => ({
 const MK = { x: 351, y: 535 }, MD = { x: 240, y: 399 }
 
 const TOUCHPOINTS = [
-  { id: 'jeddahAirport', section: 'arrival', label: 'مطار جدة', unit: 'راكب/يوم', supKey: 'jeddahAirport', demKey: 'jeddahAirport', x: 290, y: 510 },
-  { id: 'madinahAirport', section: 'arrival', label: 'مطار المدينة', unit: 'راكب/يوم', supKey: 'madinahAirport', demKey: 'madinahAirport', x: 262, y: 385 },
-  { id: 'taifAirport', section: 'arrival', label: 'مطار الطائف', unit: 'راكب/يوم', supKey: 'taifAirport', demKey: 'taifAirport', x: 388, y: 560 },
-  { id: 'yanbuAirport', section: 'arrival', label: 'مطار ينبع', unit: 'راكب/يوم', supKey: 'yanbuAirport', demKey: 'yanbuAirport', x: 192, y: 420 },
-  { id: 'kingFahdCauseway', section: 'arrival', label: 'جسر الملك فهد', unit: 'شخص/يوم', supKey: 'kingFahdCauseway', demKey: 'kingFahdCauseway', x: 778, y: 410 },
-  { id: 'salwa', section: 'arrival', label: 'سلوى', unit: 'شخص/يوم', supKey: 'salwa', demKey: 'salwa', x: 755, y: 478 },
-  { id: 'alBatha', section: 'arrival', label: 'البطحاء', unit: 'شخص/يوم', supKey: 'alBatha', demKey: 'alBatha', x: 718, y: 558 },
-  { id: 'alHaditha', section: 'arrival', label: 'الحديثة', unit: 'شخص/يوم', supKey: 'alHaditha', demKey: 'alHaditha', x: 205, y: 188 },
-  { id: 'halatAmmar', section: 'arrival', label: 'حالة عمار', unit: 'شخص/يوم', supKey: 'halatAmmar', demKey: 'halatAmmar', x: 148, y: 225 },
-  { id: 'jadidatArar', section: 'arrival', label: 'جديدة عرعر', unit: 'شخص/يوم', supKey: 'jadidatArar', demKey: 'jadidatArar', x: 405, y: 152 },
-  { id: 'alKhadra', section: 'arrival', label: 'الخضراء', unit: 'شخص/يوم', supKey: 'alKhadra', demKey: 'alKhadra', x: 615, y: 368 },
-  { id: 'alKhafji', section: 'arrival', label: 'الخفجي', unit: 'شخص/يوم', supKey: 'alKhafji', demKey: 'alKhafji', x: 688, y: 305 },
-  { id: 'alDurrah', section: 'arrival', label: 'الدرة', unit: 'شخص/يوم', supKey: 'alDurrah', demKey: 'alDurrah', x: 785, y: 438 },
-  { id: 'emptyQuarter', section: 'arrival', label: 'الربع الخالي', unit: 'شخص/يوم', supKey: 'emptyQuarter', demKey: 'emptyQuarter', x: 648, y: 638 },
-  { id: 'alRuqi', section: 'arrival', label: 'الرقي', unit: 'شخص/يوم', supKey: 'alRuqi', demKey: 'alRuqi', x: 698, y: 572 },
-  { id: 'alWadiah', section: 'arrival', label: 'الوديعة', unit: 'شخص/يوم', supKey: 'alWadiah', demKey: 'alWadiah', x: 538, y: 708 },
-  { id: 'alb', section: 'arrival', label: 'علب', unit: 'شخص/يوم', supKey: 'alb', demKey: null, x: 382, y: 742 },
-  { id: 'mataf', section: 'nusuk', label: 'المطاف', unit: 'طائف/يوم', supKey: 'mataf', demKey: 'mataf', ...ring(MK.x, MK.y, 24, 0, 3) },
-  { id: 'masaa', section: 'nusuk', label: 'المسعى', unit: 'ساعٍ/يوم', supKey: 'masaa', demKey: 'masaa', ...ring(MK.x, MK.y, 24, 1, 3) },
+  { id: 'jeddahAirport', section: 'arrival', label: 'مطار جدة', unit: 'مسافر/يوم', supKey: 'jeddahAirport', demKey: 'jeddahAirport', x: 290, y: 510 },
+  { id: 'madinahAirport', section: 'arrival', label: 'مطار المدينة', unit: 'مسافر/يوم', supKey: 'madinahAirport', demKey: 'madinahAirport', x: 262, y: 385 },
+  { id: 'taifAirport', section: 'arrival', label: 'مطار الطائف', unit: 'مسافر/يوم', supKey: 'taifAirport', demKey: 'taifAirport', x: 388, y: 560 },
+  { id: 'yanbuAirport', section: 'arrival', label: 'مطار ينبع', unit: 'مسافر/يوم', supKey: 'yanbuAirport', demKey: 'yanbuAirport', x: 192, y: 420 },
+  { id: 'kingFahdCauseway', section: 'arrival', label: 'جسر الملك فهد', unit: 'شخص/يوم', supKey: 'kingFahdCauseway', demKey: 'kingFahdCauseway', x: 785, y: 438 },
+  { id: 'salwa', section: 'arrival', label: 'سلوى', unit: 'شخص/يوم', supKey: 'salwa', demKey: 'salwa', x: 821, y: 484 },
+  { id: 'alBatha', section: 'arrival', label: 'البطحاء', unit: 'شخص/يوم', supKey: 'alBatha', demKey: 'alBatha', x: 838, y: 653 },
+  { id: 'alHaditha', section: 'arrival', label: 'الحديثة', unit: 'شخص/يوم', supKey: 'alHaditha', demKey: 'alHaditha', x: 188, y: 80 },
+  { id: 'halatAmmar', section: 'arrival', label: 'حالة عمار', unit: 'شخص/يوم', supKey: 'halatAmmar', demKey: 'halatAmmar', x: 165, y: 146 },
+  { id: 'jadidatArar', section: 'arrival', label: 'جديدة عرعر', unit: 'شخص/يوم', supKey: 'jadidatArar', demKey: 'jadidatArar', x: 350, y: 79 },
+  { id: 'alKhadra', section: 'arrival', label: 'الخضراء', unit: 'شخص/يوم', supKey: 'alKhadra', demKey: 'alKhadra', x: 928, y: 614 },
+  { id: 'alKhafji', section: 'arrival', label: 'الخفجي', unit: 'شخص/يوم', supKey: 'alKhafji', demKey: 'alKhafji', x: 581, y: 192 },
+  { id: 'alDurrah', section: 'arrival', label: 'الدرة', unit: 'شخص/يوم', supKey: 'alDurrah', demKey: 'alDurrah', x: 810, y: 470 },
+  { id: 'emptyQuarter', section: 'arrival', label: 'الربع الخالي', unit: 'شخص/يوم', supKey: 'emptyQuarter', demKey: 'emptyQuarter', x: 700, y: 681 },
+  { id: 'alRuqi', section: 'arrival', label: 'الرقي', unit: 'شخص/يوم', supKey: 'alRuqi', demKey: 'alRuqi', x: 796, y: 668 },
+  { id: 'alWadiah', section: 'arrival', label: 'الوديعة', unit: 'شخص/يوم', supKey: 'alWadiah', demKey: 'alWadiah', x: 582, y: 760 },
+  { id: 'alb', section: 'arrival', label: 'علب', unit: 'شخص/يوم', supKey: 'alb', demKey: null, x: 400, y: 786 },
+  { id: 'mataf', section: 'nusuk', label: 'المطاف', unit: 'مصلٍّ/يوم', supKey: 'mataf', demKey: 'mataf', ...ring(MK.x, MK.y, 24, 0, 3) },
+  { id: 'masaa', section: 'nusuk', label: 'المسعى', unit: 'مصلٍّ/يوم', supKey: 'masaa', demKey: 'masaa', ...ring(MK.x, MK.y, 24, 1, 3) },
   { id: 'makkahPrayer', section: 'nusuk', label: 'الحرم المكي', unit: 'مصلٍّ/يوم', supKey: 'makkahPrayer', demKey: 'makkahPrayer', ...ring(MK.x, MK.y, 24, 2, 3) },
   { id: 'madinahPrayer', section: 'nusuk', label: 'المسجد النبوي', unit: 'مصلٍّ/صلاة', supKey: 'madinahPrayer', demKey: 'madinahPrayer', x: MD.x, y: MD.y },
   { id: 'makkahAccommodation', section: 'city', label: 'إيواء مكة', unit: 'سرير/يوم', supKey: 'makkahAccommodation', demKey: 'makkahAccommodation', x: MK.x - 30, y: MK.y + 8 },
   { id: 'madinahAccommodation', section: 'city', label: 'إيواء المدينة', unit: 'سرير/يوم', supKey: 'madinahAccommodation', demKey: 'madinahAccommodation', x: MD.x - 26, y: MD.y + 8 },
-  { id: 'makkahWater', section: 'support', label: 'مياه مكة', unit: 'شخص', supKey: 'makkahWater', demKey: 'makkahWater', ...ring(MK.x, MK.y, 40, 0, 4) },
-  { id: 'makkahEnergy', section: 'support', label: 'طاقة مكة', unit: 'شخص', supKey: 'makkahEnergy', demKey: 'makkahEnergy', ...ring(MK.x, MK.y, 40, 1, 4) },
+  { id: 'makkahWater', section: 'support', label: 'مياه مكة', unit: 'فرد', supKey: 'makkahWater', demKey: 'makkahWater', ...ring(MK.x, MK.y, 40, 0, 4) },
+  { id: 'makkahEnergy', section: 'support', label: 'طاقة مكة', unit: 'فرد', supKey: 'makkahEnergy', demKey: 'makkahEnergy', ...ring(MK.x, MK.y, 40, 1, 4) },
   { id: 'makkahTelecom', section: 'support', label: 'اتصالات مكة', unit: 'شخص/يوم', supKey: 'makkahTelecom', demKey: 'makkahTelecom', ...ring(MK.x, MK.y, 40, 2, 4) },
-  { id: 'madinahWater', section: 'support', label: 'مياه المدينة', unit: 'شخص', supKey: 'madinahWater', demKey: 'madinahWater', ...ring(MD.x, MD.y, 34, 0, 3) },
-  { id: 'madinahEnergy', section: 'support', label: 'طاقة المدينة', unit: 'شخص', supKey: 'madinahEnergy', demKey: 'madinahEnergy', ...ring(MD.x, MD.y, 34, 1, 3) },
+  { id: 'madinahWater', section: 'support', label: 'مياه المدينة', unit: 'فرد', supKey: 'madinahWater', demKey: 'madinahWater', ...ring(MD.x, MD.y, 34, 0, 3) },
+  { id: 'madinahEnergy', section: 'support', label: 'طاقة المدينة', unit: 'فرد', supKey: 'madinahEnergy', demKey: 'madinahEnergy', ...ring(MD.x, MD.y, 34, 1, 3) },
   { id: 'madinahTelecom', section: 'support', label: 'اتصالات المدينة', unit: 'شخص/يوم', supKey: 'madinahTelecom', demKey: 'madinahTelecom', ...ring(MD.x, MD.y, 34, 2, 3) },
 ]
 
 /* ═══ LAYOUT ═══ */
-const SIDE_W_1COL = 700
-const SIDE_W_2COL = 380 * 2 + 14 + 60
+const SIDE_W_1COL = 780
+const SIDE_W_2COL = 440 * 2 + 14 + 60
 const MAP_BASE_H = 900
-const CARD_W = 380, CARD_H = 230, CARD_GAP = 14
+const CARD_W = 440, CARD_H = 280, CARD_GAP = 14
 const CARD_PAD_TOP = 28, CARD_PAD_BOT = 28
 const L_CARD_X = -CARD_W - 40
 const R_CARD_X = 1000 + 40
@@ -166,10 +166,10 @@ function SideCard({ x, y, tp, secColor, delay, isHighlighted }) {
   const isDef = tp.gap < 0
   const col = isDef ? T.deficit : T.surplus
   const W = CARD_W, H = CARD_H
-  const PAD = 18
+  const PAD = 22
   const HEADER_Y = y + PAD
-  const GAUGE_CX = x + W / 2, GAUGE_CY = y + 115, GAUGE_R = 60
-  const METRICS_Y = y + H - 60
+  const GAUGE_CX = x + W / 2, GAUGE_CY = y + 132, GAUGE_R = 72
+  const METRICS_Y = y + H - 74
   const colW = (W - PAD * 2 - 16) / 3
   const col1X = x + PAD, col2X = col1X + colW + 8, col3X = col2X + colW + 8
 
@@ -191,37 +191,40 @@ function SideCard({ x, y, tp, secColor, delay, isHighlighted }) {
         stroke={isHighlighted ? (secColor || col) : 'rgba(65,64,66,0.08)'}
         strokeWidth={isHighlighted ? 1.8 : 0.8} />
       {/* Section accent */}
-      <rect x={x + W - 4} y={y + 16} width={3.5} height={H - 32} rx={2} fill={secColor || col} opacity={0.55} />
+      <rect x={x + W - 4} y={y + 16} width={4} height={H - 32} rx={2} fill={secColor || col} opacity={0.55} />
       {/* Header */}
-      <text x={x + W - PAD} y={HEADER_Y + 14} fill={T.txt}
-        fontSize={16} fontWeight={800} fontFamily="'BahijTheSansArabic',sans-serif">{tp.label}</text>
-      <rect x={x + PAD} y={HEADER_Y + 1} width={52} height={20} rx={6}
+      <text x={x + W - PAD} y={HEADER_Y + 16} fill={T.txt}
+        fontSize={19} fontWeight={800} fontFamily="'BahijTheSansArabic',sans-serif">{tp.label}</text>
+      <rect x={x + PAD} y={HEADER_Y + 1} width={60} height={24} rx={7}
         fill={isDef ? 'rgba(184,92,78,0.08)' : 'rgba(0,122,83,0.08)'}
         stroke={isDef ? 'rgba(184,92,78,0.18)' : 'rgba(0,122,83,0.18)'} strokeWidth={0.7} />
-      <text x={x + PAD + 26} y={HEADER_Y + 14.5} textAnchor="middle" fill={col}
-        fontSize={9.5} fontWeight={800} fontFamily="'Cairo','BahijTheSansArabic',sans-serif">{isDef ? 'عجز' : 'فائض'}</text>
+      <text x={x + PAD + 30} y={HEADER_Y + 16} textAnchor="middle" fill={col}
+        fontSize={11} fontWeight={800} fontFamily="'Cairo','BahijTheSansArabic',sans-serif">{isDef ? 'عجز' : 'فائض'}</text>
       {/* Gauge */}
       <SemiGaugeSVG cx={GAUGE_CX} cy={GAUGE_CY} r={GAUGE_R} pct={tp.pct} color={col}
-        trackColor="rgba(65,64,66,0.06)" sw={15} showTicks />
+        trackColor="rgba(65,64,66,0.06)" sw={18} showTicks />
       <text x={GAUGE_CX} y={GAUGE_CY - 8} textAnchor="middle" fill={col}
-        fontSize={26} fontWeight={900} letterSpacing="-0.7" fontFamily="'Cairo','BahijTheSansArabic',sans-serif">{tp.pct}%</text>
-      <text x={GAUGE_CX} y={GAUGE_CY + 10} textAnchor="middle" fill={T.txtSub}
-        fontSize={8} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">نسبة التغطية</text>
+        fontSize={32} fontWeight={900} letterSpacing="-0.7" fontFamily="'Cairo','BahijTheSansArabic',sans-serif">{tp.pct}%</text>
+      <text x={GAUGE_CX} y={GAUGE_CY + 14} textAnchor="middle" fill={T.txtSub}
+        fontSize={10} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">نسبة التغطية</text>
       {/* Metrics divider */}
       <line x1={x + PAD} y1={METRICS_Y - 20} x2={x + W - PAD} y2={METRICS_Y - 20} stroke="rgba(65,64,66,0.07)" strokeWidth={0.7} />
       {/* Col 3 */}
-      <text x={col3X + colW / 2} y={METRICS_Y + 6} textAnchor="middle" fill={T.txtSub} fontSize={10} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif" >الطاقة الاستيعابية</text>
-      <text x={col3X + colW / 2} y={METRICS_Y + 35} textAnchor="middle" fill={T.txt} fontSize={18} fontWeight={900} fontFamily="'Cairo',sans-serif">{fmtN(tp.supply)}</text>
-      <line x1={col3X - 4} y1={METRICS_Y - 2} x2={col3X - 4} y2={METRICS_Y + 34} stroke="rgba(65,64,66,0.06)" strokeWidth={0.6} />
+      <text x={col3X + colW / 2} y={METRICS_Y + 6} textAnchor="middle" fill={T.txtSub} fontSize={12} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif" >الطاقة الاستيعابية</text>
+      <text x={col3X + colW / 2} y={METRICS_Y + 34} textAnchor="middle" fill={T.txt} fontSize={22} fontWeight={900} fontFamily="'Cairo',sans-serif">{fmtN(tp.supply)}</text>
+      <text x={col3X + colW / 2} y={METRICS_Y + 50} textAnchor="middle" fill={T.txtDim} fontSize={9.5} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">{tp.unit}</text>
+      <line x1={col3X - 4} y1={METRICS_Y - 2} x2={col3X - 4} y2={METRICS_Y + 52} stroke="rgba(65,64,66,0.06)" strokeWidth={0.6} />
       {/* Col 1 */}
-      <text x={col1X + colW / 2} y={METRICS_Y + 6} textAnchor="middle" fill={T.txtSub} fontSize={10} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">المستهدفات</text>
-      <text x={col1X + colW / 2} y={METRICS_Y + 35} textAnchor="middle" fill={T.txt} fontSize={18} fontWeight={900} fontFamily="'Cairo',sans-serif">{fmtN(tp.demand)}</text>
-      <line x1={col2X - 4} y1={METRICS_Y - 2} x2={col2X - 4} y2={METRICS_Y + 34} stroke="rgba(65,64,66,0.06)" strokeWidth={0.6} />
+      <text x={col1X + colW / 2} y={METRICS_Y + 6} textAnchor="middle" fill={T.txtSub} fontSize={12} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">المستهدفات</text>
+      <text x={col1X + colW / 2} y={METRICS_Y + 34} textAnchor="middle" fill={T.txt} fontSize={22} fontWeight={900} fontFamily="'Cairo',sans-serif">{fmtN(tp.demand)}</text>
+      <text x={col1X + colW / 2} y={METRICS_Y + 50} textAnchor="middle" fill={T.txtDim} fontSize={9.5} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">{tp.unit}</text>
+      <line x1={col2X - 4} y1={METRICS_Y - 2} x2={col2X - 4} y2={METRICS_Y + 52} stroke="rgba(65,64,66,0.06)" strokeWidth={0.6} />
       {/* Col 2 */}
-      <text x={col2X + colW / 2} y={METRICS_Y + 6} textAnchor="middle" fill={T.txtSub} fontSize={10} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">الفارق</text>
-      <text x={col2X + colW / 2} y={METRICS_Y + 35} textAnchor="middle" fill={col} fontSize={18} fontWeight={900} fontFamily="'Cairo',sans-serif">
+      <text x={col2X + colW / 2} y={METRICS_Y + 6} textAnchor="middle" fill={T.txtSub} fontSize={12} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">الفارق</text>
+      <text x={col2X + colW / 2} y={METRICS_Y + 34} textAnchor="middle" fill={col} fontSize={22} fontWeight={900} fontFamily="'Cairo',sans-serif">
         {isDef ? '▼' : '▲'} {fmtN(Math.abs(tp.gap))}
       </text>
+      <text x={col2X + colW / 2} y={METRICS_Y + 50} textAnchor="middle" fill={T.txtDim} fontSize={9.5} fontWeight={600} fontFamily="'BahijTheSansArabic',sans-serif">{tp.unit}</text>
     </g>
   )
 }
@@ -270,6 +273,7 @@ function MobileCard({ tp, secColor, isHighlighted }) {
         <div className="exec-mob-metric">
           <span className="exec-mob-metric-lbl">الطاقة الاستيعابية</span>
           <span className="exec-mob-metric-val">{fmtN(tp.supply)}</span>
+          <span className="exec-mob-metric-unit">{tp.unit}</span>
         </div>
         <div className="exec-mob-metric-sep" />
         <div className="exec-mob-metric">
@@ -277,11 +281,13 @@ function MobileCard({ tp, secColor, isHighlighted }) {
           <span className="exec-mob-metric-val" style={{ color: col }}>
             {isDef ? '▼' : '▲'} {fmtN(Math.abs(tp.gap))}
           </span>
+          <span className="exec-mob-metric-unit">{tp.unit}</span>
         </div>
         <div className="exec-mob-metric-sep" />
         <div className="exec-mob-metric">
           <span className="exec-mob-metric-lbl">المستهدفات</span>
           <span className="exec-mob-metric-val">{fmtN(tp.demand)}</span>
+          <span className="exec-mob-metric-unit">{tp.unit}</span>
         </div>
       </div>
     </div>
@@ -556,8 +562,8 @@ function ExecPageHeader({ yearLabel, sectionLabel }) {
       <div className="exec-page-header-inner">
         <div className="exec-page-header-top">
           <div className="exec-page-header-title-block">
-            <h1 className="exec-page-header-h1">لوحة المؤشرات التنفيذية</h1>
-            <p className="exec-page-header-subtitle">رؤية استراتيجية شاملة للطاقة الاستيعابية عبر جميع نقاط الاتصال لرحلة ضيوف الرحمن</p>
+            <h1 className="exec-page-header-h1">ملخص تنفيذي</h1>
+            <p className="exec-page-header-subtitle">ملخص تنفيذي لحالات الطاقات الاستيعابية عبر جميع نقاط الاتصال لرحلة ضيوف الرحمن</p>
           </div>
         </div>
       </div>
@@ -656,7 +662,7 @@ export default function ExecutiveDashboard() {
   const kpis = useMemo(() => {
     if (!yearlyData) return null
     const pool = sectionFilter ? TOUCHPOINTS.filter(tp => tp.section === sectionFilter) : TOUCHPOINTS
-    const stats = pool.map(tp => { const s = yearlyData.supply?.[tp.supKey] ?? 0; const d = tp.demKey ? (yearlyData.demand?.[tp.demKey] ?? 0) : 0; return { supply: s, demand: d, gap: s - d, label: tp.label } })
+    const stats = pool.map(tp => { const s = yearlyData.supply?.[tp.supKey] ?? 0; const d = tp.demKey ? (yearlyData.demand?.[tp.demKey] ?? 0) : 0; return { supply: s, demand: d, gap: s - d, label: tp.label, unit: tp.unit } })
     const defCount = stats.filter(t => t.gap < 0).length
     const surCount = stats.filter(t => t.gap > 0).length
     const worst = stats.reduce((w, t) => t.gap < w.gap ? t : w, { gap: 0 })
@@ -723,10 +729,9 @@ export default function ExecutiveDashboard() {
         <FilterBar yrs={yrs} toggleYr={toggleYr} selectAllYrs={selectAll} isAllYrs={isAll} activeSection={sectionFilter} onSection={handleSection} />
         {kpis && (
           <div className="exec-kpi-row">
-            <KpiCard label="نقاط العجز" value={kpis.defCount} sub={`من ${kpis.total} نقطة`} color={T.deficit} indicator emptyMsg="لا يوجد عجز حالياً" />
-            <KpiCard label="نقاط الفائض" value={kpis.surCount} sub={`من ${kpis.total} نقطة`} color={T.surplus} indicator emptyMsg="لا يوجد فائض حالياً" />
-            <KpiCard label="أكبر عجز" value={kpis.worst?.gap < 0 ? fmtN(Math.abs(kpis.worst.gap)) : '—'} sub={kpis.worst?.gap < 0 ? kpis.worst.label : undefined} color={T.deficit} emptyMsg="جميع النقاط ضمن الطاقة" />
-            <KpiCard label="نسبة التغطية" value={`${kpis.covPct}%`} sub="إجمالي طاقة / مستهدفات" color={T.gold} />
+            <KpiCard label="نقاط الاتصال التي بها عجز" value={kpis.defCount} sub={`من ${kpis.total} نقطة`} color={T.deficit} indicator emptyMsg="لا يوجد عجز حالياً" />
+            <KpiCard label="نقاط الاتصال التي بها فائض" value={kpis.surCount} sub={`من ${kpis.total} نقطة`} color={T.surplus} indicator emptyMsg="لا يوجد فائض حالياً" />
+            <KpiCard label="أكبر عجز في نقاط الاتصال" value={kpis.worst?.gap < 0 ? fmtN(Math.abs(kpis.worst.gap)) : '—'} sub={kpis.worst?.gap < 0 ? `${kpis.worst.label} · ${kpis.worst.unit}` : undefined} color={T.deficit} emptyMsg="جميع النقاط ضمن الطاقة" />
           </div>
         )}
       </div>

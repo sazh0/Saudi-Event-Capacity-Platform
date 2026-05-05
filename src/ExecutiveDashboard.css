@@ -200,7 +200,7 @@
 ════════════════════════════════════════════════════════════════ */
 .exec-kpi-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
   margin-bottom: 15px;
 }
@@ -456,9 +456,9 @@
 /* ════════════════════════════════════════════════════════════════
    RESPONSIVE — TABLET (iPad)
 ════════════════════════════════════════════════════════════════ */
-@media (max-width: 1100px) {
+@media (max-width: 1000px) {
   .exec-kpi-row {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
   }
 }
@@ -487,7 +487,7 @@
   }
 
   .exec-kpi-row {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     gap: 10px;
   }
 
@@ -599,7 +599,7 @@
 
   /* ── KPI cards ── */
   .exec-kpi-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
     margin-bottom: 10px;
   }
@@ -874,6 +874,15 @@
   color: #414042;
   font-family: "Cairo", sans-serif;
   line-height: 1;
+}
+
+.exec-mob-metric-unit {
+  font-size: 7px;
+  font-weight: 600;
+  color: rgba(65, 64, 66, 0.40);
+  font-family: "BahijTheSansArabic", sans-serif;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .exec-mob-metric-sep {
