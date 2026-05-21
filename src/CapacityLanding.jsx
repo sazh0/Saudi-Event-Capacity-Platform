@@ -1,29 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import FAQ from "./faq";
+import { Navbar, Footer } from './SharedLayout'
+import { C } from './theme'
+
 
 /* ═══════════════════════════════════════════════════════
-   TOKENS
-═══════════════════════════════════════════════════════ */
-const C = {
-  charcoalD: '#1A1A1A',
-  charcoalM: '#151515',
-  bronze: '#967126',
-  bronzeL: '#B8912E',
-  bronzeXL: '#D4AA52',
-  green: '#007a53',
-  greenL: '#009966',
-  greenXL: '#00BC7D',
-  gray: '#75787b',
-  grayL: '#9A9D9F',
-  grayXL: '#C8CACC',
-  cream: '#F4F1EB',
-  creamD: '#E8E4DA',
-  white: '#FFFFFF',
-}
-
-/* ═══════════════════════════════════════════════════════
-   GLOBAL STYLES (injected once)
+   GLOBAL STYLES
 ═══════════════════════════════════════════════════════ */
 const STYLE_ID = 'capacity-landing-styles'
 function injectStyles() {
@@ -31,11 +14,9 @@ function injectStyles() {
   const s = document.createElement('style')
   s.id = STYLE_ID
   s.textContent = `
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-
     .cl-root *, .cl-root *::before, .cl-root *::after { box-sizing: border-box; }
     .cl-root {
-      font-family: "BahijTheSansArabic", "Segoe UI", sans-serif;
+      font-family: "TheYearofHandicrafts", "Segoe UI", sans-serif;
       background: ${C.charcoalD};
       color: ${C.cream};
       -webkit-font-smoothing: antialiased;
@@ -75,7 +56,6 @@ function injectStyles() {
       transform:translateY(0);
     }
 
-    /* Staggered children */
     .cl-reveal-child {
       opacity:0;
       transform:translateY(18px);
@@ -85,10 +65,7 @@ function injectStyles() {
     .cl-visible .cl-reveal-child:nth-child(2) { transition-delay:0.1s; }
     .cl-visible .cl-reveal-child:nth-child(3) { transition-delay:0.2s; }
     .cl-visible .cl-reveal-child:nth-child(4) { transition-delay:0.3s; }
-    .cl-visible .cl-reveal-child:nth-child(1),
-    .cl-visible .cl-reveal-child:nth-child(2),
-    .cl-visible .cl-reveal-child:nth-child(3),
-    .cl-visible .cl-reveal-child:nth-child(4) { opacity:1; transform:translateY(0); }
+    .cl-visible .cl-reveal-child { opacity:1; transform:translateY(0); }
 
     .cl-nav-link {
       color:${C.grayXL};
@@ -119,24 +96,6 @@ function injectStyles() {
       box-shadow: 0 24px 56px rgba(0,0,0,0.38), 0 0 0 1px ${C.bronze}28;
     }
 
-    .cl-tile {
-      transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease;
-      cursor: pointer;
-    }
-    .cl-tile:hover {
-      transform: translateY(-3px) scale(1.018);
-      background: rgba(150,113,38,0.09) !important;
-      border-color: ${C.bronze}55 !important;
-    }
-
-    .cl-step {
-      transition: transform 0.22s ease, box-shadow 0.22s ease;
-    }
-    .cl-step:hover {
-      transform: translateX(-4px);
-      box-shadow: 4px 0 0 0 ${C.bronze} inset;
-    }
-
     .cl-btn-primary {
       position:relative; overflow:hidden;
     }
@@ -150,41 +109,23 @@ function injectStyles() {
     .cl-btn-primary:hover::after { opacity:1; }
 
     .cl-shimmer-text {
-      background: linear-gradient(100deg, ${C.bronzeXL} 0%, ${C.bronzeL} 35%, #FFE099 50%, ${C.bronzeL} 65%, ${C.bronzeXL} 100%);
+      background: linear-gradient(100deg, ${C.bronzeXL} 0%, ${C.bronzeL} 35%, #c4b5fd 50%, ${C.bronzeL} 65%, ${C.bronzeXL} 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      backgroundclip: text;
-      animation: cl-shimmerText 4s linear infinite
+      background-clip: text;
+      animation: cl-shimmerText 4s linear infinite;
     }
 
     @keyframes cl-floatOrb {
-  0%,100% { transform: translateY(0) scale(1); opacity:0.18; }
-  50%      { transform: translateY(-28px) scale(1.12); opacity:0.28; }
-}
-@keyframes cl-iconFloat {
-  0%,100% { transform: translateY(0); }
-  50%      { transform: translateY(-5px); }
-}
-@keyframes cl-iconPulseRing {
-  0%   { transform: scale(0.85); opacity: 0.7; }
-  70%  { transform: scale(1.35); opacity: 0; }
-  100% { transform: scale(0.85); opacity: 0; }
-}
-@keyframes cl-barGrow {
-  from { width: 0%; }
-  to   { width: var(--bar-w, 75%); }
-}
-@keyframes cl-cardGlow {
-  0%,100% { box-shadow: 0 0 0 1px var(--card-accent, transparent); }
-  50%      { box-shadow: 0 0 32px 2px var(--card-glow, transparent), 0 0 0 1px var(--card-accent, transparent); }
-}
-  
+      0%,100% { transform: translateY(0) scale(1); opacity:0.18; }
+      50%      { transform: translateY(-28px) scale(1.12); opacity:0.28; }
+    }
+
     @media (max-width:768px) {
       .cl-hide-mobile { display:none !important; }
       .cl-nav-desktop { display:none !important; }
       .cl-mobile-btn  { display:flex !important; }
-      .cl-method-grid { grid-template-columns:1fr !important; }
     }
     @media (min-width:769px) {
       .cl-mobile-btn { display:none !important; }
@@ -192,42 +133,8 @@ function injectStyles() {
   `
   document.head.appendChild(s)
 }
-const footerStyles = `
-  .footer-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 36px;
-    margin-bottom: 33px;
-    direction: rtl;
-  }
-  .footer-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 14px;
-    text-align: right;
-  }
-  .footer-logo {
-    display: none;
-  }
-  @media (max-width: 640px) {
-    .footer-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 28px;
-      margin-bottom: 25px;
-    }
-    .footer-logo-col {
-      grid-column: 1 / -1;
-      justify-content: center;
-    }
-    .footer-bottom {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-  }
-`;
+
+
 /* ═══════════════════════════════════════════════════════
    REVEAL HOOK
 ═══════════════════════════════════════════════════════ */
@@ -278,12 +185,13 @@ function Counter({ target, suffix = '' }) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   HERO CANVAS
+   HERO CANVAS — purple particles
 ═══════════════════════════════════════════════════════ */
 function HeroCanvas({ intensity }) {
   const ref = useRef(null)
   const anim = useRef(null)
   const state = useRef({ particles: [], nodes: [] })
+
 
   useEffect(() => {
     const canvas = ref.current
@@ -314,7 +222,7 @@ function HeroCanvas({ intensity }) {
       life: 0,
       maxLife: Math.random() * 260 + 100,
       size: Math.random() * 1.7 + 0.4,
-      kind: Math.random() < 0.18 ? 'gold' : Math.random() < 0.32 ? 'green' : 'gray',
+      kind: Math.random() < 0.18 ? 'purple' : Math.random() < 0.32 ? 'blue' : 'gray',
     })
 
     const initParticles = () => {
@@ -322,8 +230,8 @@ function HeroCanvas({ intensity }) {
     }
 
     const col = (kind, a) => {
-      if (kind === 'gold') return `rgba(180,140,48,${a})`
-      if (kind === 'green') return `rgba(0,140,90,${a})`
+      if (kind === 'purple') return `rgba(139,92,246,${a})`
+      if (kind === 'blue') return `rgba(59,130,246,${a})`
       return `rgba(110,112,114,${a})`
     }
 
@@ -334,9 +242,8 @@ function HeroCanvas({ intensity }) {
     const draw = () => {
       ctx.clearRect(0, 0, W, H)
 
-      // Islamic-inspired hex dot grid
       const gs = 46
-      ctx.fillStyle = 'rgba(150,113,38,0.04)'
+      ctx.fillStyle = 'rgba(124,58,237,0.035)'
       for (let x = 0; x < W + gs; x += gs) {
         const offset = (Math.floor(x / gs) % 2) * (gs / 2)
         for (let y = offset; y < H + gs; y += gs) {
@@ -344,29 +251,27 @@ function HeroCanvas({ intensity }) {
         }
       }
 
-      // Node network
       const iv = intensity
       state.current.nodes.forEach((n, i) => {
         state.current.nodes.slice(i + 1).forEach(m => {
           const d = Math.hypot(n.x - m.x, n.y - m.y)
           if (d < 130) {
-            ctx.strokeStyle = `rgba(150,113,38,${(1 - d / 130) * 0.055 * iv})`
+            ctx.strokeStyle = `rgba(124,58,237,${(1 - d / 130) * 0.055 * iv})`
             ctx.lineWidth = 0.5
             ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(m.x, m.y); ctx.stroke()
           }
         })
         ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(150,113,38,0.16)'; ctx.fill()
+        ctx.fillStyle = 'rgba(124,58,237,0.16)'; ctx.fill()
       })
 
-      // Particles
       state.current.particles.forEach((p, idx) => {
         p.x += p.vx * iv; p.y += p.vy * iv; p.life++
         const a = Math.sin((p.life / p.maxLife) * Math.PI) * 0.8
 
-        if (p.kind === 'gold') {
+        if (p.kind === 'purple') {
           const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 5)
-          g.addColorStop(0, `rgba(190,150,55,${a * 0.5})`)
+          g.addColorStop(0, `rgba(139,92,246,${a * 0.5})`)
           g.addColorStop(1, 'rgba(0,0,0,0)')
           ctx.fillStyle = g
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 5, 0, Math.PI * 2); ctx.fill()
@@ -406,288 +311,108 @@ function HeroCanvas({ intensity }) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   LOGO ICON
+   HERO VIDEO
 ═══════════════════════════════════════════════════════ */
-const LogoIcon = ({ size = 32 }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-    <path d="M16 2 L28 9 L28 23 L16 30 L4 23 L4 9Z" stroke={C.bronze} strokeWidth="1.2" fill="none" />
-    <path d="M16 2 L16 30" stroke={C.bronze} strokeWidth="0.5" strokeOpacity="0.4" strokeDasharray="2 3" />
-    <path d="M4 9 L28 23" stroke={C.bronze} strokeWidth="0.5" strokeOpacity="0.4" strokeDasharray="2 3" />
-    <path d="M4 23 L28 9" stroke={C.bronze} strokeWidth="0.5" strokeOpacity="0.4" strokeDasharray="2 3" />
-    <circle cx="16" cy="16" r="3.5" fill={C.bronze} fillOpacity="0.82" />
-    <circle cx="16" cy="7" r="1.5" fill={C.green} />
-    <circle cx="23" cy="21" r="1.4" fill={C.bronze} fillOpacity="0.55" />
-    <circle cx="9" cy="21" r="1.4" fill={C.grayL} fillOpacity="0.7" />
-  </svg>
-)
-
-/* ═══════════════════════════════════════════════════════
-   STATUS BADGE
-═══════════════════════════════════════════════════════ */
-const Badge = ({ type }) => {
-  const m = {
-    ready: { l: 'جاهز للعرض', c: C.greenXL, bg: `${C.green}22`, bdr: `${C.green}40` },
-    updating: { l: 'قيد التحديث', c: C.bronzeXL, bg: `${C.bronze}18`, bdr: `${C.bronze}40` },
-    soon: { l: 'قريباً', c: C.grayL, bg: 'rgba(120,122,123,0.15)', bdr: 'rgba(120,122,123,0.3)' },
-  }
-  const s = m[type] || m.soon
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: s.bg, color: s.c, border: `1px solid ${s.bdr}`, whiteSpace: 'nowrap' }}>
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.c, animation: type === 'ready' ? 'cl-dotBlink 2s infinite' : 'none' }} />
-      {s.l}
-    </span>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════
-   NAVBAR
-═══════════════════════════════════════════════════════ */
-function Navbar({ scrolled, navigate }) {
-  const [mOpen, setMOpen] = useState(false)
-  const scrollToSection = (linkText) => {
-    const sectionMap = {
-      'عن المنصة': 'aboutSection',
-      'الأسئلة الشائعة': 'faqSection',
-      'تواصل معنا': 'contactSection'
-    }
-    const sectionId = sectionMap[linkText]
-    if (sectionId) {
-      const element = document.getElementById(sectionId)
-      if (element) {
-        const offset = 80 // navbar height
-        const elementPosition = element.getBoundingClientRect().top
-        const offsetPosition = elementPosition + window.pageYOffset - offset
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        })
-        setMOpen(false) // close mobile menu
-      }
-    }
-  }
-  const base = {
-    fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.2s',
-  }
-  return (
-    <nav style={{
-      position: 'fixed', top: 0, right: 0, left: 0, zIndex: 200,
-      background: scrolled ? `${C.charcoalD}` : 'transparent',
-      backdropFilter: scrolled ? 'blur(18px)' : 'none',
-      transition: 'all 0.4s ease',
-    }}>
-      <div
-        style={{
-          maxWidth: 1300,
-          margin: '0 auto',
-          padding: '0 24px',
-          height: 80,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Left (Logo) - fixed column */}
-        <div style={{ width: 220, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-            onClick={() => navigate('/')}
-          >
-            <img src="/WhitePEP.png" alt="Logo" style={{ height: 80, width: 'auto', display: 'block' }} />
-          </div>
-        </div>
-
-        {/* Center (Desktop links) - true center */}
-        <div
-          className="cl-nav-desktop"
-          style={{
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 28,
-          }}
-        >
-          {['عن المنصة', 'الأسئلة الشائعة', 'تواصل معنا'].map((l) => (
-            <a
-              key={l}
-              href="#"
-              className="cl-nav-link"
-              onClick={(e) => {
-                e.preventDefault()
-                scrollToSection(l)
-              }}
-            >
-              {l}
-            </a>
-          ))}
-        </div>
-
-        {/* Right (CTA) - same width as left */}
-        <div
-          className="cl-hide-mobile"
-          style={{ width: 220, display: 'flex', justifyContent: 'flex-end', gap: 10 }}
-        >
-          <button
-            className="cl-btn-primary"
-            onClick={() => navigate('/touchpoints')}
-            style={{
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              padding: '8px 22px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 800,
-              background: `linear-gradient(135deg,${C.green},${C.greenL})`,
-              color: 'white',
-              border: 'none',
-              boxShadow: `0 4px 16px ${C.green}45`,
-            }}
-          >
-            ابدأ الآن
-          </button>
-        </div>
-
-
-        {/* Mobile toggle */}
-        <button
-          type="button"
-          className="cl-mobile-btn"
-          onClick={() => setMOpen(o => !o)}
-          aria-label={mOpen ? "إغلاق القائمة" : "فتح القائمة"}
-          aria-expanded={mOpen}
-          aria-controls="mobile-menu"
-          style={{
-            ...base,
-            background: "transparent",
-            border: "none",
-            padding: 10,              // hit area أكبر
-            borderRadius: 12,
-            display: "inline-flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            gap: 6,
-            cursor: "pointer",
-            WebkitTapHighlightColor: "transparent",
-            transition: "transform 120ms ease, background 160ms ease",
-          }}
-          onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.96)")}
-          onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          {[0, 1, 2].map((i) => {
-            const isTop = i === 0;
-            const isMid = i === 1;
-            const isBot = i === 2;
-
-            const common = {
-              width: 22,
-              height: 2,
-              background: C.cream,
-              display: "block",
-              borderRadius: 999,
-              transformOrigin: "center",
-              transition: "transform 220ms ease, opacity 180ms ease",
-            };
-
-            const openStyle = isTop
-              ? { transform: "translateY(8px) rotate(45deg)" }
-              : isBot
-                ? { transform: "translateY(-8px) rotate(-45deg)" }
-                : { opacity: 0, transform: "scaleX(0.8)" };
-
-            return (
-              <span
-                key={i}
-                style={{
-                  ...common,
-                  ...(mOpen ? openStyle : { opacity: 1, transform: "none" }),
-                }}
-              />
-            );
-          })}
-        </button>
-      </div>
-
-      {/* Mobile drawer */}
-      {mOpen && (
-        <div style={{ background: `${C.charcoalD}`, backdropFilter: 'blur(18px)', padding: '18px 24px 24px' }}>
-          {['عن المنصة', 'الأسئلة الشائعة', 'تواصل معنا'].map(l => (
-            <a
-              key={l}
-              href="#"
-              className="cl-nav-link"
-              style={{ display: 'block', marginBottom: 16, fontSize: 15 }}
-              onClick={(e) => {
-                e.preventDefault()
-                scrollToSection(l)
-              }}
-            >
-              {l}
-            </a>))}
-          <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-            <button onClick={() => navigate('/touchpoints')} style={{ flex: 1, padding: '10px', background: C.green, color: 'white', border: 'none', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>ابدأ الآن</button>
-          </div>
-        </div>
-      )}
-    </nav>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════
-   HERO
-═══════════════════════════════════════════════════════ */
-/* ─── Drop your video file in /public and pass the filename as videoSrc ─── */
 function HeroVideo({ src }) {
   const videoRef = useRef(null)
+  const [isMuted, setIsMuted] = useState(true)
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-
-    // Wait for browser paint + short delay before forcing play
-    // This bypasses the "element not visible" autoplay block
     const tryPlay = () => {
       video.muted = true
       video.play().catch(() => { })
     }
-
-    // Double rAF ensures the DOM is fully painted
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         tryPlay()
-        // Also try again after 300ms as a safety net for slow connections
         setTimeout(tryPlay, 300)
       })
     })
   }, [src])
 
+  const toggleSound = (e) => {
+    e.stopPropagation()
+    if (videoRef.current) {
+      const nextMuted = !videoRef.current.muted
+      videoRef.current.muted = nextMuted
+      setIsMuted(nextMuted)
+    }
+  }
+
   return (
-    <video
-      ref={videoRef}
-      key={src}
-      autoPlay muted loop playsInline
-      preload="auto"
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        objectPosition: 'center',
-        pointerEvents: 'none',
-        filter: 'brightness(0.45) saturate(0.7)',
-      }}>
-      {src.endsWith('.webm')
-        ? <source src={src} type="video/webm" />
-        : src.endsWith('.mp4')
-          ? <source src={src} type="video/mp4" />
-          : <source src={src} />
-      }
-    </video>
+    <>
+      <video
+        ref={videoRef}
+        key={src}
+        autoPlay
+        muted={isMuted}
+        loop
+        playsInline
+        preload="auto"
+        style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          objectFit: 'cover', objectPosition: 'center', pointerEvents: 'none',
+          filter: 'brightness(0.35) saturate(0.6) hue-rotate(10deg)',
+        }}
+      >
+        {src.endsWith('.webm')
+          ? <source src={src} type="video/webm" />
+          : src.endsWith('.mp4')
+            ? <source src={src} type="video/mp4" />
+            : <source src={src} />
+        }
+      </video>
+
+      <button
+        onClick={toggleSound}
+        style={{
+          position: 'absolute',
+          bottom: 28, left: 28, zIndex: 150,
+          background: 'transparent',
+          border: 'none',
+          color: isMuted ? 'rgba(255,255,255,0.35)' : C.bronzeXL,
+          cursor: 'pointer',
+          padding: 8,
+          display: 'flex', alignItems: 'center', gap: 6,
+          transition: 'all 0.3s ease',
+          pointerEvents: 'auto',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.color = C.bronzeXL
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.color = isMuted ? 'rgba(255,255,255,0.35)' : C.bronzeXL
+          e.currentTarget.style.transform = 'translateY(0)'
+        }}
+        aria-label={isMuted ? "تشغيل الصوت" : "كتم الصوت"}
+      >
+        {isMuted ? (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 5L6 9H2v6h4l5 4V5z" />
+            <line x1="23" y1="9" x2="17" y2="15" />
+            <line x1="17" y1="9" x2="23" y2="15" />
+          </svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 5L6 9H2v6h4l5 4V5z" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+          </svg>
+        )}
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.5, opacity: 0.9 }}>
+          {isMuted ? 'صوت' : 'كتم'}
+        </span>
+      </button>
+    </>
   )
 }
 
+/* ═══════════════════════════════════════════════════════
+   HERO — concise marketing copy
+═══════════════════════════════════════════════════════ */
 function Hero({ navigate, videoSrc }) {
   const [scrollY, setScrollY] = useState(0)
   const [hovered, setHovered] = useState(false)
@@ -695,33 +420,48 @@ function Hero({ navigate, videoSrc }) {
   useEffect(() => {
     const fn = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', fn, { passive: true })
+
     return () => window.removeEventListener('scroll', fn)
   }, [])
 
-  // ← ADD THIS right here, after the scroll useEffect
   useEffect(() => {
     const video = document.querySelector('video')
     if (!video) return
+
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
         video.muted = true
         video.play().catch(() => { })
       }
     }
+
     document.addEventListener('visibilitychange', onVisible)
+
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   const intensity = hovered ? 1.7 : Math.max(0.55, 1 - scrollY / 500)
 
   const stats = [
-    { val: 25, suf: '+', label: <>نقطة اتصال<br />تم تحليلها</>, c: C.bronzeXL },
-    { val: 10, suf: 'آلاف+', label: <>سيناريوهات<br />تحليليـة</>, c: C.greenXL },
-    { val: 10, suf: '+', label: <>جهــات<br />داعـمة</>, c: C.bronzeL }
+    {
+      val: 9,
+      suf: '+',
+      label: <>فعاليات<br />كبرى</>,
+      c: C.bronzeXL
+    },
+    {
+      val: 5,
+      suf: ' سنوات',
+      label: <>تحليلية<br />متوقعة</>,
+      c: C.greenXL
+    },
+    { val: 100, suf: '%', label: <>تفاعلية<br />كاملة</>, c: C.bronzeL }
   ]
 
   const btn = {
-    fontFamily: 'inherit', cursor: 'pointer', border: 'none',
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    border: 'none',
     transition: 'transform 0.2s, box-shadow 0.2s',
   }
 
@@ -731,143 +471,242 @@ function Hero({ navigate, videoSrc }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        position: 'relative', minHeight: '100vh',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         overflow: 'hidden',
-        /* fallback gradient shown while video loads, or when no video provided */
-        background: `linear-gradient(160deg,${C.charcoalD} 0%,${C.charcoalM} 55%,#1c2620 100%)`,
-      }}>
-
-      {/* ── Video layer (bottommost) ── */}
+        background: `linear-gradient(160deg,${C.charcoalD} 0%,${C.charcoalM} 55%,#1a1030 100%)`,
+      }}
+    >
       {videoSrc && <HeroVideo src={videoSrc} />}
 
-      {/* ── Extra dark scrim when video is present so text stays sharp ── */}
       {videoSrc && (
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
-          background: 'rgba(10,9,9,0.42)',
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 1,
+            background: 'rgba(10,8,20,0.45)',
+          }}
+        />
       )}
 
-      {/* ── Particle canvas (sits above video) ── */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
         <HeroCanvas intensity={intensity} />
       </div>
 
-      {/* ── Vignettes ── */}
-      <div style={{ position: 'absolute', top: 0, insetInline: 0, height: 220, background: `linear-gradient(to bottom,${C.charcoalD},transparent)`, pointerEvents: 'none', zIndex: 3 }} />
-      <div style={{ position: 'absolute', bottom: 0, insetInline: 0, height: 240, background: `linear-gradient(to top,${C.charcoalD},transparent)`, pointerEvents: 'none', zIndex: 3 }} />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          insetInline: 0,
+          height: 220,
+          background: `linear-gradient(to bottom,${C.charcoalD},transparent)`,
+          pointerEvents: 'none',
+          zIndex: 3,
+        }}
+      />
 
-      {/* ── Decorative angled lines ── */}
-      <div style={{ position: 'absolute', top: '18%', right: '-4%', width: 1, height: '55%', background: `linear-gradient(to bottom,transparent,${C.bronze}45,transparent)`, transform: 'rotate(-11deg)', zIndex: 3 }} />
-      <div style={{ position: 'absolute', top: '24%', right: '9%', width: 1, height: '42%', background: `linear-gradient(to bottom,transparent,${C.bronze}20,transparent)`, transform: 'rotate(-11deg)', zIndex: 3 }} />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          insetInline: 0,
+          height: 240,
+          background: `linear-gradient(to top,${C.charcoalD},transparent)`,
+          pointerEvents: 'none',
+          zIndex: 3,
+        }}
+      />
 
-      {/* ── Content ── */}
-      <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', maxWidth: 800, padding: '0 24px', transform: `translateY(${-scrollY * 0.18}px)` }}>
-        {/* Headline */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '18%',
+          right: '-4%',
+          width: 1,
+          height: '55%',
+          background: `linear-gradient(to bottom,transparent,${C.bronze}45,transparent)`,
+          transform: 'rotate(-11deg)',
+          zIndex: 3,
+        }}
+      />
+
+      {/* Content */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          textAlign: 'center',
+          maxWidth: 780,
+          padding: '0 24px',
+          transform: `translateY(${-scrollY * 0.18}px)`,
+        }}
+      >
         <h1
           style={{
-            fontSize: "clamp(30px,5.8vw,60px)",
+            fontSize: 'clamp(42px,5.8vw,70px)',
             fontWeight: 900,
             lineHeight: 1.18,
             color: C.cream,
             marginBottom: 12,
-            animation: "cl-fadeInUp 0.85s ease 0.15s both",
-            letterSpacing: -0.4,
+            animation: 'cl-fadeInUp 0.85s ease 0.15s both',
           }}
         >
-          <span className="cl-shimmer-text" >الطاقة الاستيعابية</span>
+          <span className="cl-shimmer-text">المرصد الوطني</span>
+
           <br />
-          <span style={{ fontSize: "0.9em", fontWeight: 800, opacity: 0.95 }}>
-            لضيوف الرحمن
+
+          <span
+            style={{
+              fontSize: '0.72em',
+              fontWeight: 800,
+              opacity: 0.95,
+            }}
+          >
+            لجاهزية الفعاليات الكبرى
           </span>
         </h1>
 
-        {/* EN subtitle */}
-        <p style={{ fontSize: 12, color: C.bronze, letterSpacing: 3.5, fontWeight: 600, marginBottom: 22, textTransform: 'uppercase', animation: 'cl-fadeInUp 0.85s ease 0.28s both' }}>
-          Touchpoints Analytics Platform
+        <p
+          style={{
+            fontSize: 'clamp(16px,1.8vw,20px)',
+            color: C.grayL,
+            lineHeight: 2,
+            maxWidth: 560,
+            margin: '0 auto 40px',
+            fontWeight: 400,
+            animation: 'cl-fadeInUp 0.85s ease 0.38s both',
+          }}
+        >
+          منصة وطنية لتحليل جاهزية المرافق وقدرتها على استيعاب الأعداد المستهدفة خلال للفعاليات الكبرى، خلال الفترة من ٢٠٣٠ حَتى ٢٠٣٤، والتي تشهد استضافة المملكة لأحداث عالمية كبرى مثل إكسبو ٢٠٣٠ وكأس العالم ٢٠٣٤.
         </p>
 
-        {/* Description */}
-        <p style={{ fontSize: 'clamp(13.5px,1.8vw,16.5px)', color: C.grayL, lineHeight: 2, maxWidth: 580, margin: '0 auto 40px', fontWeight: 400, animation: 'cl-fadeInUp 0.85s ease 0.38s both' }}>
-          منصة رقمية تُعنى بقياس وتحليل الطاقة الاستيعابية الآمنة عبر مختلف نقاط الاتصال خلال رحلة ضيوف الرحمن، بهدف دعم اتخاذ القرار التشغيلي، وضمان جاهزية الخدمات المقدمة بكفاءة وموثوقية، بما يسهم في تحقيق مستهدفات رؤية المملكة 2030.        </p>
-
-        {/* CTAs */}
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', animation: 'cl-fadeInUp 0.85s ease 0.48s both' }}>
-          <button className="cl-btn-primary" onClick={() => navigate('/touchpoints')} style={{ ...btn, padding: '14px 36px', borderRadius: 10, fontSize: 15, fontWeight: 800, background: `linear-gradient(135deg,${C.green},${C.greenL})`, color: 'white', boxShadow: `0 8px 28px ${C.green}52` }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 14px 36px ${C.green}68` }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 8px 28px ${C.green}52` }}>
-            ابدأ الآن
+        {/* CTA */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 14,
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            animation: 'cl-fadeInUp 0.85s ease 0.48s both',
+          }}
+        >
+          <button
+            className="cl-btn-primary"
+            onClick={() => navigate('/landing')}
+            style={{
+              ...btn,
+              padding: '14px 36px',
+              borderRadius: 10,
+              fontSize: 15,
+              fontWeight: 800,
+              background: `linear-gradient(135deg,${C.bronze},${C.bronzeL})`,
+              color: 'white',
+              boxShadow: `0 8px 28px ${C.bronze}52`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = `0 14px 36px ${C.bronze}68`
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = `0 8px 28px ${C.bronze}52`
+            }}
+          >
+            استكشف المنصة
           </button>
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 40, marginTop: 56, flexWrap: 'wrap', animation: 'cl-fadeInUp 0.85s ease 0.6s both' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 40,
+            marginTop: 56,
+            flexWrap: 'wrap',
+            animation: 'cl-fadeInUp 0.85s ease 0.6s both',
+          }}
+        >
           {stats.map((s, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 900, color: s.c, lineHeight: 1 }}>
+              <div
+                style={{
+                  fontSize: 'clamp(36px, 5vw, 56px)',
+                  fontWeight: 900,
+                  color: s.c,
+                  lineHeight: 1,
+                }}
+              >
                 <Counter target={s.val} suffix={s.suf} />
               </div>
-              <div style={{ fontSize: 15, color: C.gray, marginTop: 8.5, fontWeight: 500 }}>{s.label}</div>
+
+              <div
+                style={{
+                  fontSize: 14,
+                  color: C.gray,
+                  marginTop: 8,
+                  fontWeight: 500,
+                }}
+              >
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Scroll hint */}
-      <div style={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, zIndex: 10, opacity: scrollY > 60 ? 0 : 1, transition: 'opacity 0.3s' }}>
-        <span style={{ fontSize: 11, color: C.gray, letterSpacing: 2, textTransform: 'uppercase' }}>استكشف</span>
-        <div style={{ width: 1.5, height: 36, background: `linear-gradient(to bottom,${C.bronze}75,transparent)` }} />
-      </div>
     </section>
   )
 }
 
 /* ═══════════════════════════════════════════════════════
-   OVERVIEW CARDS
+   OVERVIEW CARDS — 3 concise cards
 ═══════════════════════════════════════════════════════ */
 function OverviewCards() {
   const cards = [
     {
-      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 2L22 7.5V18.5L13 24L4 18.5V7.5Z" stroke={C.bronze} strokeWidth="1.4" fill={`${C.bronze}12`} /><circle cx="13" cy="13" r="3.5" fill={C.bronze} fillOpacity=".7" /><circle cx="13" cy="6" r="1.4" fill={C.bronze} /><circle cx="19" cy="17" r="1.4" fill={C.bronze} fillOpacity=".5" /><circle cx="7" cy="17" r="1.4" fill={C.bronze} fillOpacity=".5" /></svg>,
-      title: 'الطاقة الاستيعابية الآمنة', en: 'Safe Capacity', accent: C.bronze,
-      desc: 'تحديد الحدود الآمنة لكل نقطة اتصال بناءً على معايير تشغيلية معتمدة ومتطلبات الجاهزية.',
+      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 2L22 7.5V18.5L13 24L4 18.5V7.5Z" stroke={C.bronze} strokeWidth="1.4" fill={`${C.bronze}12`} /><circle cx="13" cy="13" r="3.5" fill={C.bronze} fillOpacity=".7" /></svg>,
+      title: 'تحليل الطاقة الاستيعابية', accent: C.bronze,
+      desc: 'قياس دقيق للحدود التشغيلية الآمنة لكل نقطة اتصال مع تحليل الفجوات بين العرض والطلب.',
     },
     {
-      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M2 17 Q6 9 11 12 Q16 15 21 7 L24 7" stroke={C.green} strokeWidth="2" strokeLinecap="round" fill="none" /><circle cx="11" cy="12" r="2.4" fill={C.green} fillOpacity=".7" /><circle cx="21" cy="7" r="2.4" fill={C.green} /><path d="M2 21 L24 21" stroke={`${C.green}28`} strokeWidth="1" strokeDasharray="3 3" /></svg>,
-      title: 'تغطية شاملة عبر جميع نقاط الاتصال', en: 'Flow & Operational Pressure', accent: C.green,
-      desc: 'عرض موحّد يغطي جميع نقاط الاتصال، مع مؤشرات رئيسية تساعد على رصد الفجوات عبر المواسم.',
+      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M2 17 Q6 9 11 12 Q16 15 21 7 L24 7" stroke={C.green} strokeWidth="2" strokeLinecap="round" fill="none" /><circle cx="11" cy="12" r="2.4" fill={C.green} fillOpacity=".7" /><circle cx="21" cy="7" r="2.4" fill={C.green} /></svg>,
+      title: 'سيناريوهات تفاعلية', accent: C.green,
+      desc: 'محاكاة سيناريوهات متعددة بتعديل المتغيرات ومشاهدة الأثر الفوري على المؤشرات.',
     },
     {
-      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 2L24 21H2Z" stroke={C.bronzeXL} strokeWidth="1.4" fill={`${C.bronzeXL}10`} strokeLinejoin="round" /><line x1="13" y1="9" x2="13" y2="16" stroke={C.bronzeXL} strokeWidth="2.5" strokeLinecap="round" /><circle cx="13" cy="19" r="1.5" fill={C.bronzeXL} /></svg>,
-      title: 'مؤشرات المخاطر والتنبيه', en: 'Risk & Alert Indicators', accent: C.bronzeXL,
-      desc: 'نظام متكامل للتنبيه المبكر يرصد تجاوز الطاقة ويُنبّه متخذي القرار قبل وقوع الأزمات.',
-    },
-    {
-      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="2" y="13" width="6" height="10" rx="2" fill={C.green} fillOpacity=".7" /><rect x="10" y="8" width="6" height="15" rx="2" fill={C.bronze} fillOpacity=".7" /><rect x="18" y="4" width="6" height="19" rx="2" fill={C.gray} fillOpacity=".5" /><line x1="1" y1="23" x2="25" y2="23" stroke={`${C.gray}35`} strokeWidth="1" /></svg>,
-      title: 'مقارنة متعددة المواقع', en: 'Multi-Site Comparison', accent: C.grayL,
-      desc: 'مقارنة شاملة بين مكة والمدينة والمنافذ البرية والجوية ضمن لوحة تحليلية موحدة.',
+      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="2" y="13" width="6" height="10" rx="2" fill={C.bronzeL} fillOpacity=".7" /><rect x="10" y="8" width="6" height="15" rx="2" fill={C.bronze} fillOpacity=".7" /><rect x="18" y="4" width="6" height="19" rx="2" fill={C.green} fillOpacity=".5" /></svg>,
+      title: 'لوحات بيانات احترافية', accent: C.bronzeL,
+      desc: 'رسوم بيانية تفاعلية ومؤشرات أداء رئيسية مع إمكانية التصدير والمقارنة عبر السنوات.',
     },
   ]
 
   return (
     <section style={{ background: `linear-gradient(180deg,${C.charcoalD},${C.charcoalM})`, padding: '82px 24px' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div className="cl-reveal" style={{ textAlign: 'center', marginBottom: 52 }}>
-          <div style={{ fontSize: 11, color: C.bronze, letterSpacing: 3, fontWeight: 600, textTransform: 'uppercase', marginBottom: 14 }}>ما تقدمه المنصة</div>
-          <h2 style={{ fontSize: 'clamp(22px,3.8vw,36px)', fontWeight: 900, color: C.cream, lineHeight: 1.2 }}>تحليل متكامل وشامل</h2>
+          <h2 style={{ fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 900, color: C.cream, lineHeight: 1.2 }}>لماذا هذه المنصة؟</h2>
           <div style={{ width: 44, height: 2.5, background: `linear-gradient(90deg,${C.bronze},transparent)`, margin: '16px auto 0', borderRadius: 2 }} />
         </div>
 
-        <div className="cl-reveal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 16 }}>
+        <div className="cl-reveal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
           {cards.map((c, i) => (
-            <div key={i} className="cl-card cl-reveal-child" style={{ background: 'rgba(255,255,255,0.028)', border: `1px solid rgba(255,255,255,0.065)`, borderTop: `2.5px solid ${c.accent}55`, borderRadius: 14, padding: '24px 20px' }}>
+            <div key={i} className="cl-card cl-reveal-child" style={{
+              background: 'rgba(255,255,255,0.028)',
+              border: `1px solid rgba(124,58,237,0.1)`,
+              borderTop: `2.5px solid ${c.accent}55`,
+              borderRadius: 14, padding: '28px 22px'
+            }}>
               <div style={{ width: 50, height: 50, borderRadius: 12, background: `${c.accent}10`, border: `1px solid ${c.accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
                 {c.svg}
               </div>
-              <div style={{ fontSize: 15.5, fontWeight: 800, color: C.cream, marginBottom: 4 }}>{c.title}</div>
-              <div style={{ fontSize: 10, color: c.accent, fontWeight: 600, letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase' }}>{c.en}</div>
-              <div style={{ fontSize: 13, color: C.grayL, lineHeight: 1.9, marginBottom: 5 }}>{c.desc}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.cream, marginBottom: 10 }}>{c.title}</div>
+              <div style={{ fontSize: 13.5, color: C.grayL, lineHeight: 1.9 }}>{c.desc}</div>
             </div>
           ))}
         </div>
@@ -877,439 +716,19 @@ function OverviewCards() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   TOUCHPOINTS
+   FAQ SECTION
 ═══════════════════════════════════════════════════════ */
-function Touchpoints() {
-
-}
-
-/* ═══════════════════════════════════════════════════════
-   PARTNERS  —  شركاء النجاح
-═══════════════════════════════════════════════════════ */
-const PARTNER_LOGOS = [
-  { src: '/logos/hajj.svg', alt: 'وزارة الحج والعمرة' },
-  { src: '/logos/moh.svg', alt: 'وزارة الصحة' },
-  { src: '/logos/mot.svg', alt: 'وزارة النقل والخدمات اللوجستية' },
-  { src: '/logos/mofa.svg', alt: 'وزارة الخارجية' },
-  { src: '/logos/tourism.svg', alt: 'وزارة السياحة' },
-  { src: '/logos/mcit.svg', alt: 'وزارة الاتصالات وتقنية المعلومات' },
-  { src: '/logos/nwc.svg', alt: 'شركة المياه الوطنية' },
-  { src: '/logos/rca-makkah.svg', alt: 'الهيئة الملكية لمدينة مكة المكرمة' },
-  { src: '/logos/mda.svg', alt: 'هيئة تطوير منطقة المدينة المنورة' },
-  { src: '/logos/saudi-electricity.png', alt: 'السعودية للطاقة' },
-  { src: '/logos/gaca.png', alt: 'الهيئة العامة للطيران المدني' },
-  { src: '/logos/pep.svg', alt: 'برنامج خدمة ضيوف الرحمن' },
-]
-
-const PARTNERS_STYLE_ID = 'partners-grid-styles'
-function injectPartnersStyles() {
-  if (document.getElementById(PARTNERS_STYLE_ID)) return
-  const s = document.createElement('style')
-  s.id = PARTNERS_STYLE_ID
-  s.textContent = `
-    .cl-partners-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 0;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    .cl-partner-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 28px 20px;
-      opacity: 0;
-      transform: translateY(24px) scale(0.9);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-
-    .cl-partner-item.cl-partner-visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-
-    .cl-partner-item img {
-      max-height: 64px;
-      max-width: 140px;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-      pointer-events: none;
-      user-select: none;
-      filter: brightness(1.6) saturate(0.15);
-      opacity: 0.55;
-      transition: filter 0.35s ease, opacity 0.35s ease, transform 0.35s ease;
-    }
-
-    .cl-partner-item:hover img {
-      filter: brightness(1.8) saturate(0.4);
-      opacity: 1;
-      transform: scale(1.18);
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 1024px) {
-      .cl-partners-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
-    @media (max-width: 640px) {
-      .cl-partners-grid {
-        grid-template-columns: repeat(3, 1fr);
-        padding: 0 16px;
-      }
-      .cl-partner-item {
-        padding: 18px 10px;
-      }
-      .cl-partner-item img {
-        max-height: 48px;
-        max-width: 100px;
-      }
-    }
-
-    @media (max-width: 400px) {
-      .cl-partners-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-  `
-  document.head.appendChild(s)
-}
-
-function PartnerLogo({ logo, index }) {
-  const ref = useRef(null)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          // stagger: each logo gets a small delay based on its index
-          setTimeout(() => setVisible(true), index * 80)
-          obs.disconnect()
-        }
-      },
-      { threshold: 0.15 }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [index])
-
+function FAQSection() {
   return (
-    <div
-      ref={ref}
-      className={`cl-partner-item${visible ? ' cl-partner-visible' : ''}`}
-      title={logo.alt}
-    >
-      <img src={logo.src} alt={logo.alt} loading="lazy" draggable="false" />
-    </div>
-  )
-}
-
-function Methodology() {
-  useEffect(() => { injectPartnersStyles() }, [])
-
-  return (
-    <section style={{ background: C.charcoalD, padding: '72px 0' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', paddingLeft: 24, paddingRight: 24 }}>
-        <div className="cl-reveal" style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ fontSize: 11, color: C.bronze, letterSpacing: 3, fontWeight: 600, textTransform: 'uppercase', marginBottom: 14 }}>شركاء النجاح</div>
-          <h2 style={{ fontSize: 'clamp(22px,3.8vw,36px)', fontWeight: 900, color: C.cream, lineHeight: 1.2 }}>
-            نفخر بشراكاتنا <span style={{ color: C.bronzeXL }}>الاستراتيجية</span>
-          </h2>
-          <div style={{ width: 44, height: 2.5, background: `linear-gradient(90deg,${C.bronze},transparent)`, margin: '16px auto 0', borderRadius: 2 }} />
+    <section className="faq-section" id="faqSection" style={{ background: C.charcoalM, padding: '82px 24px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <h2 style={{ fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 900, color: C.cream, lineHeight: 1.2, textAlign: 'center' }}>الأسئلة الشائعة</h2>
+        <div style={{ width: 44, height: 2.5, background: `linear-gradient(90deg,${C.bronze},transparent)`, margin: '16px auto 0', borderRadius: 2, marginBottom: 25 }} />
+        <div className="faq-wrapper">
+          <FAQ language="ar" />
         </div>
-      </div>
-
-      <div className="cl-partners-grid">
-        {PARTNER_LOGOS.map((logo, i) => (
-          <PartnerLogo key={logo.src} logo={logo} index={i} />
-        ))}
       </div>
     </section>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════
-   CTA BANNER
-═══════════════════════════════════════════════════════ */
-function CTABanner({ navigate }) {
-  const btn = {
-    fontFamily: "inherit",
-    cursor: "pointer",
-    transition: "all 0.2s",
-    border: "none",
-  };
-
-  return (
-    <>
-      {/* FAQ Section */}
-      <section className="faq-section" id="faqSection" style={{ background: C.charcoalM, padding: '82px 24px' }}>
-        <div className="container mx-auto px-4">
-          <h2 style={{ fontSize: 'clamp(22px,3.8vw,36px)', fontWeight: 900, color: C.cream, lineHeight: 1.2, textAlign: 'center' }}>الأسئلة الشائعة</h2>
-          <div style={{ width: 44, height: 2.5, background: `linear-gradient(90deg,${C.bronze},transparent)`, margin: '16px auto 0', borderRadius: 2, marginBottom: 25 }} />
-          <div className="faq-wrapper">
-            <FAQ language="ar" />
-          </div>
-        </div>
-      </section >
-    </>
-  );
-}
-
-
-
-/* ═══════════════════════════════════════════════════════
-   GLASS MODAL
-═══════════════════════════════════════════════════════ */
-const MODAL_CONTENT = {
-  'نطاق الخدمة': {
-    icon: '🗺️',
-    body: `تغطي منصة تحليل الطاقة الاستيعابية النطاق الجغرافي الكامل للمشاعر المقدسة وما يحيط بها، وتشمل:
-
-• **المسجد الحرام وساحاته** — تتبع الكثافة اللحظية وتحليل التدفق البشري في جميع الأروقة والمداخل.
-• **منى والمشاعر المقدسة** — تقييم الطاقة الاستيعابية لمخيمات الحجاج ومسارات الحركة خلال موسم الحج.
-• **السعي والمسعى** — قياس معدلات الإشغال والأوقات الحرجة.
-• **الفنادق والمجمعات الإيوائية** — تحليل توزيع طاقة الإيواء الفندقي بمحيط 5 كم حول المسجد الحرام.
-• **محطات النقل والمداخل الرئيسية** — تحليل نقاط الاختناق وسيناريوهات الإخلاء.
-
-يُقدّم النطاق الخدمي بيانات مُجمَّعة ومُشفَّرة بالكامل، ولا تُتاح البيانات الفردية لأي طرف.`,
-  },
-  'ميثاق المستخدمين': {
-    icon: '🤝',
-    body: `يُحدّد هذا الميثاق الإطار الأخلاقي والمهني الذي يلتزم به جميع مستخدمي المنصة:
-
-**الالتزامات الجوهرية**
-• استخدام البيانات لأغراض تشغيلية وتحليلية مشروعة فحسب.
-• عدم مشاركة بيانات الوصول أو بيانات الاعتماد مع أطراف ثالثة.
-• الإفصاح الفوري عن أي اختراق أمني أو استخدام غير مصرح به.
-
-**المعايير المهنية**
-• الحرص على دقة المدخلات وموثوقية التحليل.
-• التعامل مع مخرجات المنصة بمنتهى السرية والمهنية.
-• الامتناع عن أي محاولة لاختراق حدود الصلاحيات المُمنوحة.
-
-**المساءلة**
-يخضع كل مستخدم للمراجعة الدورية، وتُعلَّق الحسابات عند ثبوت المخالفة. تحتفظ الجهة المشغّلة بسجلات التدقيق لمدة لا تقل عن ثلاث سنوات.`,
-  },
-  'شروط الاستخدام': {
-    icon: '📋',
-    body: `**١. قبول الشروط**
-باستخدامك لهذه المنصة، فإنك تُقرّ بقراءة هذه الشروط وفهمها والموافقة الكاملة على الالتزام بها.
-
-**٢. نطاق الترخيص**
-تُمنح صلاحية الوصول بشكل شخصي وغير قابل للتحويل، ومقتصرة على الوظائف المحددة في اتفاقية الخدمة.
-
-**٣. الملكية الفكرية**
-جميع محتويات المنصة — بما تشمل البيانات والمنهجيات والتصورات — ملكٌ حصري لبرنامج خدمة ضيوف الرحمن. يُحظر إعادة النشر أو التوزيع دون إذن كتابي مسبق.
-
-**٤. حدود المسؤولية**
-تُقدَّم البيانات كأداة مساندة للقرار؛ ولا تتحمل المنصة أي مسؤولية قانونية عن القرارات التشغيلية المتخذة بناءً عليها.
-
-**٥. التعديلات**
-تحتفظ الجهة المشغّلة بحق تعديل هذه الشروط في أي وقت، مع إشعار المستخدمين المسجّلين قبل سبعة أيام على الأقل.`,
-  },
-  'سياسة الخصوصية': {
-    icon: '🔒',
-    body: `**البيانات التي نجمعها**
-تقتصر على بيانات تسجيل الدخول، وسجلات الجلسات، ومعرّفات الأجهزة — لأغراض الأمان والتدقيق حصراً.
-
-**كيف نستخدم البيانات**
-• مراقبة أداء النظام والكشف عن الاستخدام غير المصرح به.
-• إنتاج تقارير إحصائية مجهولة الهوية لتطوير المنصة.
-• لا تُباع البيانات أو تُشارك مع أي طرف تجاري ثالث.
-
-**الاحتفاظ بالبيانات**
-تُحتفظ سجلات الجلسات لمدة ١٢ شهراً، وسجلات التدقيق الأمني لمدة ٣ سنوات وفق اشتراطات الجهات الرقابية.
-
-**حقوقك**
-يحق لك طلب الاطلاع على بياناتك أو تصحيحها أو حذفها عبر التواصل مع فريق الدعم. يُعالَج الطلب خلال ١٤ يوم عمل.
-
-**الأمان**
-تعتمد المنصة تشفير TLS 1.3 لنقل البيانات، وAES-256 للتخزين، ومراجعات أمنية دورية من جهات مستقلة.`,
-  },
-}
-
-function GlassModal({ title, onClose }) {
-  const content = MODAL_CONTENT[title]
-  useEffect(() => {
-    const esc = e => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', esc)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', esc)
-      document.body.style.overflow = ''
-    }
-  }, [onClose])
-
-  const renderBody = (text) =>
-    text.split('\n').map((line, i) => {
-      if (!line.trim()) return <div key={i} style={{ height: 8 }} />
-      const parts = line.split(/\*\*(.+?)\*\*/g)
-      return (
-        <p key={i} style={{ margin: 0, fontSize: 13, color: C.grayXL, lineHeight: 2, direction: 'rtl' }}>
-          {parts.map((p, j) =>
-            j % 2 === 1
-              ? <strong key={j} style={{ color: C.bronzeXL, fontWeight: 700 }}>{p}</strong>
-              : p
-          )}
-        </p>
-      )
-    })
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
-        animation: 'cl-fadeIn 0.22s ease',
-        background: `${C.charcoalD}`,
-        backdropFilter: 'blur(20px)'
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          maxWidth: 560, width: '100%', maxHeight: '80vh',
-          borderRadius: 20,
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(150,113,38,0.1)',
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'cl-fadeInUp 0.28s ease',
-          background: `${C.charcoalD}`,
-          backdropFilter: 'blur(20px)'
-        }}
-      >
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '20px 24px 16px',
-          borderBottom: `1px solid rgba(255,255,255,0.06)`,
-          direction: 'rtl',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 22 }}>{content.icon}</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: C.cream }}>{title}</span>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 8, width: 32, height: 32, cursor: 'pointer',
-              color: C.grayXL, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.2s', fontFamily: 'inherit',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(150,113,38,0.18)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-            aria-label="إغلاق"
-          >✕</button>
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: '20px 24px 24px', overflowY: 'auto', direction: 'rtl' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {renderBody(content.body)}
-          </div>
-        </div>
-
-        {/* Glow accent */}
-        <div style={{
-          position: 'absolute', bottom: 0, right: 0,
-          width: 180, height: 180,
-          background: `radial-gradient(circle, ${C.bronze}18 0%, transparent 70%)`,
-          pointerEvents: 'none',
-          borderRadius: '50%',
-          transform: 'translate(40%, 40%)',
-        }} />
-      </div>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════
-   FOOTER
-═══════════════════════════════════════════════════════ */
-function Footer({ navigate }) {
-  const [activeModal, setActiveModal] = useState(null)
-
-  const MAILTO_SUBJECT = encodeURIComponent('تواصل عبر منصة تحليل الطاقة الاستيعابية')
-  const MAILTO_BODY = encodeURIComponent(
-    `السلام عليكم ورحمة الله وبركاته،\n\nأتواصل معكم عبر منصة تحليل الطاقة الاستيعابية بخصوص:\n\n[اكتب رسالتك هنا]\n\nبيانات التواصل:\nالاسم: \nالجهة: \nرقم الجوال: \n\nشكراً لكم،\nتحياتي`
-  )
-
-  const handleLink = (label) => {
-    if (label === 'عن المنصة') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } else if (label === 'الأسئلة الشائعة') {
-      const el = document.getElementById('faqSection')
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    } else if (label === 'تواصل معنا') {
-      window.location.href = `mailto:capacity@pep.gov.sa?subject=${MAILTO_SUBJECT}&body=${MAILTO_BODY}`
-    } else if (MODAL_CONTENT[label]) {
-      setActiveModal(label)
-    }
-  }
-
-  return (
-    <>
-      {activeModal && <GlassModal title={activeModal} onClose={() => setActiveModal(null)} />}
-
-      <footer id="contactSection" style={{ background: C.charcoalD, borderTop: `1px solid ${C.bronze}14`, padding: '40px 24px 25px' }}>
-        <style>{footerStyles}</style>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
-
-          <div className="footer-grid">
-            {[
-              { t: "نظرة عامة", ls: ["عن المنصة", "نطاق الخدمة"] },
-              { t: "السياسات والحوكمة", ls: ["ميثاق المستخدمين", "شروط الاستخدام", "سياسة الخصوصية"] },
-              { t: "الدعم والمساعدة", ls: ["الأسئلة الشائعة", "تواصل معنا"] },
-            ].map((col, i) => (
-              <div key={i}>
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: C.cream, marginBottom: 14 }}>{col.t}</div>
-                {col.ls.map(l => (
-                  <button
-                    key={l}
-                    onClick={() => handleLink(l)}
-                    style={{
-                      display: 'block', width: '100%', textAlign: 'right',
-                      fontSize: 12, color: C.gray, background: 'none',
-                      border: 'none', cursor: 'pointer', padding: '0 0 9px 0',
-                      fontFamily: 'inherit', transition: 'color 0.2s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.color = C.bronzeXL}
-                    onMouseLeave={e => e.currentTarget.style.color = C.gray}
-                  >{l}</button>
-                ))}
-              </div>
-            ))}
-
-            {/* Logo — 4th column */}
-            <div className="footer-logo-col" style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }} onClick={() => navigate('/')}>
-              <img src="/White PEP-2030.png" alt="Logo" style={{ height: 80, width: 'auto', display: 'block', marginTop: -12 }} />
-            </div>
-          </div>
-
-          {/* Bottom bar */}
-          <div style={{ borderTop: `1px solid rgba(255,255,255,0.055)`, paddingTop: 22, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
-            <p style={{ fontSize: 11, color: C.gray, maxWidth: 580, lineHeight: 1.8 }}>
-              <span style={{ color: C.bronze, fontWeight: 700 }}>إخلاء مسؤولية: </span>
-              البيانات المعروضة لأغراض تحليلية ولا تُمثّل وثيقة رسمية.
-            </p>
-            <p style={{ fontSize: 11, color: C.gray }}>
-              جميع الحقوق محفوظة لبرنامج خدمة ضيوف الرحمن © {new Date().getFullYear()}
-            </p>
-          </div>
-        </div>
-      </footer>
-    </>
   )
 }
 
@@ -1341,12 +760,10 @@ export default function CapacityLanding() {
 
   return (
     <div className="cl-root">
-      <Navbar scrolled={scrolled} navigate={navigate} />
-      <Hero navigate={navigate} videoSrc="/herovideo.mp4" />
+      <Navbar scrolled={scrolled} navigate={navigate} isLanding={true} />
+      <Hero navigate={navigate} videoSrc="/public/herovideo.mp4" />
       <OverviewCards />
-      <Touchpoints />
-      <Methodology />
-      <CTABanner navigate={navigate} />
+      <FAQSection />
       <Footer navigate={navigate} />
     </div>
   )

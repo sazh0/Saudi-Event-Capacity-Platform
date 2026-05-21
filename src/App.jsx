@@ -3,65 +3,114 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { C, injectNavStyles, footerStyles, MODAL_CONTENT } from './theme'
 import { Navbar, Footer, GlassModal } from './SharedLayout'
-import { parseWorkbook, RAMADAN, HAJJ } from './parse.js'
-import ExportModal, { buildReportPayload } from './ExportModal.jsx'
+// ═══ Event definitions (unified — no seasons/mega distinction) ═══
+const NAMED_EVENTS = {}
+for (let yr = 2030; yr <= 2034; yr++) {
+  NAMED_EVENTS[yr] = [
+    { name: 'موسم الرياض', s: new Date(yr, 0, 1), e: new Date(yr, 2, 15), venue: 'entertainment' },
+    { name: 'موسم الرياض', s: new Date(yr, 9, 15), e: new Date(yr, 11, 31), venue: 'entertainment' },
+    { name: 'موسم جدة', s: new Date(yr, 5, 1), e: new Date(yr, 6, 15), venue: 'entertainment' },
+    { name: 'موسم الدرعية', s: new Date(yr, 10, 15), e: new Date(yr, 11, 31), venue: 'seasonal' },
+    { name: 'فورمولا إي', s: new Date(yr, 1, 10), e: new Date(yr, 1, 12), venue: 'stadium' },
+    { name: 'فورمولا 1', s: new Date(yr, 2, 7), e: new Date(yr, 2, 9), venue: 'stadium' },
+    { name: 'كأس العالم للرياضات الإلكترونية', s: new Date(yr, 6, 3), e: new Date(yr, 7, 15), venue: 'stadium' },
+    { name: 'مبادرة مستقبل الاستثمار', s: new Date(yr, 9, 22), e: new Date(yr, 9, 25), venue: 'conference' },
+    { name: 'ساوندستورم', s: new Date(yr, 11, 12), e: new Date(yr, 11, 15), venue: 'theater' },
+  ]
+}
+NAMED_EVENTS[2030].push({ name: 'إكسبو 2030', s: new Date(2030, 9, 1), e: new Date(2030, 11, 31), venue: 'conference' })
+NAMED_EVENTS[2031].push({ name: 'إكسبو 2030', s: new Date(2031, 0, 1), e: new Date(2031, 2, 31), venue: 'conference' })
+NAMED_EVENTS[2034].push({ name: 'كأس العالم 2034', s: new Date(2034, 10, 15), e: new Date(2034, 11, 18), venue: 'stadium' })
+
+// Helper: find which event a date falls in
+const getEventName = (dt) => {
+  const yr = dt.getFullYear()
+  const events = NAMED_EVENTS[yr] || []
+  for (const ev of events) {
+    if (dt >= ev.s && dt <= ev.e) return ev.name
+  }
+  return null
+}
+
+// Returns ALL event names active on a given date
+const getEventNames = (dt) => {
+  const yr = dt.getFullYear()
+  const events = NAMED_EVENTS[yr] || []
+  const names = []
+  for (const ev of events) {
+    if (dt >= ev.s && dt <= ev.e && !names.includes(ev.name)) names.push(ev.name)
+  }
+  return names
+}
+
+// RAMADAN/HAJJ backward compat — RAMADAN unused, HAJJ = first event per year for reference area
+const ALL_EVENTS_BY_YEAR = {}
+const RAMADAN = {}
+const HAJJ = {}
+for (let yr = 2030; yr <= 2034; yr++) {
+  const evs = NAMED_EVENTS[yr] || []
+  ALL_EVENTS_BY_YEAR[yr] = evs
+  RAMADAN[yr] = []  // no seasons concept
+  HAJJ[yr] = evs[0] || { s: new Date(yr, 2, 7), e: new Date(yr, 2, 9) }
+}
+// ExportModal removed
 import {
   ComposedChart, Line, Bar, BarChart, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceArea, ReferenceLine,
-  PieChart, Pie, Cell, RadialBarChart, RadialBar,
+  PieChart, Pie, Cell, RadialBarChart, RadialBar, PolarAngleAxis,
 } from 'recharts'
 import * as XLSX from 'xlsx';
 import { FiMoon, FiAlertTriangle, FiCheck, FiCheckCircle, FiTrendingUp, FiTrendingDown, FiCalendar, FiArrowUp, FiArrowDown, FiInbox, FiClipboard, FiInfo, FiX, FiSliders } from 'react-icons/fi'
-import { MdHotel, MdConstruction, MdFlightTakeoff, MdDirectionsBus, MdBed, MdWarning, MdSwapHoriz, MdStraighten, MdBarChart, MdCircle, MdDiamond } from 'react-icons/md'
-import { FaMosque } from 'react-icons/fa'
+import { MdHotel, MdConstruction, MdFlightTakeoff, MdDirectionsBus, MdDirectionsCar, MdBed, MdWarning, MdSwapHoriz, MdStraighten, MdBarChart, MdCircle, MdDiamond, MdSports, MdSportsSoccer, MdMusicNote, MdCelebration } from 'react-icons/md'
+import { FaCity, FaGlobeAsia, FaChartArea } from 'react-icons/fa'
 
 /* ════════════════════════════════════════════════════════════════
    DESIGN TOKENS
 ════════════════════════════════════════════════════════════════ */
 const T = {
-  // ── Surfaces — light mode
-  bg: '#fefefe', bgM: '#f4f2ee', bgL: '#ece8e1',
-  card: 'rgba(65,64,66,0.04)', border: 'rgba(65,64,66,0.10)',
-  hover: 'rgba(150,113,38,0.06)',
+  // ── Surfaces — light mode (futuristic blue tint)
+  bg: '#f0f4f8', bgM: '#e8eef4', bgL: '#dce4ed',
+  card: 'rgba(7,24,46,0.04)', border: 'rgba(7,24,46,0.10)',
+  hover: 'rgba(19,103,138,0.06)',
 
-  // ── Gold — Primary / CTA / Warning / Deficit
-  bronze: '#967126', bronzeL: '#b08432', bronzeXL: '#c9a048',
+  // ── Gold — Primary / CTA / Accent
+  bronze: '#7c3aed', bronzeL: '#8b5cf6', bronzeXL: '#a78bfa',
 
-  // ── Emerald — Brand / Supply / Surplus / Positive
-  green: '#007a53', greenL: '#009a65', greenXL: '#1aae78', greenDk: '#005236',
-  sideHdr: '#2c2b2d', sideBg: '#414042', sideDk: '#1a1919',
+  // ── Teal/Cyan — Brand / Supply / Readiness / Positive
+  green: '#2563eb', greenL: '#3b82f6', greenXL: '#60a5fa', greenDk: '#1e40af',
+  sideHdr: '#07182E', sideBg: '#0F3D5E', sideDk: '#050f1e',
 
-  // ── الطاقة الاستيعابية — Supply = Emerald
-  sup: '#007a53', supL: 'rgba(0,122,83,0.22)', supBg: 'rgba(0,122,83,0.08)',
+  // ── سعة المرافق — Supply = Teal
+  sup: '#2563eb', supL: 'rgba(37,99,235,0.22)', supBg: 'rgba(37,99,235,0.08)',
 
-  // ── المستهدفات — Demand = Gold/Bronze
-  dem: '#967126', demL: 'rgba(150,113,38,0.24)', demBg: 'rgba(150,113,38,0.08)',
+  // ── المستهدفينين — Demand = Gold
+  dem: '#8b5cf6', demL: 'rgba(139,92,246,0.24)', demBg: 'rgba(139,92,246,0.08)',
 
-  // ── Outcome state — Rust for deficit, Emerald for surplus
-  deficit: '#b85c4e', deficitL: 'rgba(184,92,78,0.28)', deficitBg: 'rgba(184,92,78,0.08)',
-  surplus: '#007a53', surplusL: 'rgba(0,122,83,0.22)', surplusBg: 'rgba(0,122,83,0.08)',
+  // ── Outcome state — Red for pressure, Teal for stability
+  deficit: '#ef4444', deficitL: 'rgba(239,68,68,0.28)', deficitBg: 'rgba(239,68,68,0.08)',
+  surplus: '#22c55e', surplusL: 'rgba(34,197,94,0.22)', surplusBg: 'rgba(34,197,94,0.08)',
 
-  // ── Demand sub-types
-  outside: '#7a5a1e',   // Deep gold  — زوار خارجيون
-  inside: '#d4a843',    // Light gold — زوار داخليون
+  // ── Visitor sub-types
+  outside: '#6d28d9',   // Deep navy — زوار دوليون
+  inside: '#c4b5fd',    // Electric teal — زوار محليون
 
-  // ── Seasons — Teal-blue family from #006e96
-  ram: '#006e96', ramL: 'rgba(0,110,150,0.22)', ramBg: 'rgba(0,110,150,0.07)',
-  hajj: '#004d6a', hajjL: 'rgba(0,77,106,0.22)', hajjBg: 'rgba(0,77,106,0.07)',
+  // ── Seasons/Events — Navy family
+  ram: '#8b5cf6', ramL: 'rgba(139,92,246,0.22)', ramBg: 'rgba(139,92,246,0.07)',
+  hajj: '#06b6d4', hajjL: 'rgba(6,182,212,0.22)', hajjBg: 'rgba(6,182,212,0.07)',
 
-  // ── Text — dark on light
-  txt: '#414042', txtSub: '#75787b', txtDim: 'rgba(65,64,66,0.45)',
+  // ── Text — navy tones
+  txt: '#1a2a3a', txtSub: '#5a6b7d', txtDim: 'rgba(26,42,58,0.45)',
 
   // ── Warning — Gold
-  warn: '#967126', warnBg: 'rgba(150,113,38,0.08)', warnBdr: 'rgba(150,113,38,0.3)',
+  warn: '#7c3aed', warnBg: 'rgba(124,58,237,0.08)', warnBdr: 'rgba(124,58,237,0.3)',
 }
-const YEARS = [2026, 2027, 2028, 2029, 2030]
+const YEARS = [2030, 2031, 2032, 2033, 2034]
 const AR_MON = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
 
 /* ════════════════════════════════════════════════════════════════
    UTILS
 ════════════════════════════════════════════════════════════════ */
-const fmtN = n => { if (n == null || isNaN(n)) return '—'; const a = Math.abs(n); return a >= 1_000_000 ? `${(a / 1_000_000).toFixed(1)}م` : Math.round(a).toLocaleString('en-US').replace(/,/g, '،') }
+const fmtN = n => { if (n == null || isNaN(n)) return '—'; const a = Math.abs(n); return a >= 1_000_000 ? `${(a / 1_000_000).toFixed(1)}م` : Math.round(a).toLocaleString('en-US').replace(/,/, '،') }
 const fmtFull = n => n == null ? '—' : Math.round(Math.abs(n)).toLocaleString('en-US').replace(/,/g, '،')
 const fmtExact = n => { if (n == null || isNaN(n)) return '—'; const a = Math.abs(n); const rounded = Math.round(a * 10) / 10; return rounded.toLocaleString('en-US', { maximumFractionDigits: 1 }).replace(/,/g, '،') }
 const pctStr = v => (v >= 0 ? `+${v}` : `${v}`) + '%'
@@ -145,8 +194,8 @@ const TT = ({ children, minW = 160 }) => {
       position: 'fixed',
       left: pos.x,
       top: pos.y,
-      background: '#ffffff',
-      border: '1px solid rgba(65,64,66,0.14)',
+      background: '#f8fafc',
+      border: '1px solid rgba(7,24,46,0.14)',
       borderRadius: 12,
       color: T.txt, fontSize: 12,
       boxShadow: '0 8px 32px rgba(65,64,66,0.18)',
@@ -158,7 +207,7 @@ const TT = ({ children, minW = 160 }) => {
       zIndex: 99999,
       pointerEvents: 'none',
       isolation: 'isolate',
-      fontFamily: "'BahijTheSansArabic', 'Segoe UI', sans-serif",
+      fontFamily: "'TheYearofHandicrafts', 'Segoe UI', sans-serif",
     }}>
       {children}
     </div>,
@@ -238,15 +287,13 @@ const Slider = ({ label, value, onChange, color, icon }) => {
   const isEmpty = value === 0
   const accent = isEmpty ? T.txtDim : isNeg ? T.deficit : color
   const id = `sl-${label.replace(/\s+/g, '-')}`
-  // fill from zero toward thumb
-  const pct = ((value - MIN) / (MAX - MIN)) * 100  // 0–100 thumb position
+  const pct = ((value - MIN) / (MAX - MIN)) * 100
   const fillLeft = isNeg ? pct : 50
   const fillW = Math.abs(pct - 50)
 
   return (
     <div className={`sc-slider${isEmpty ? '' : ' sc-slider--on'}${isNeg ? ' sc-slider--neg' : ''}`}
       style={{ '--acc': accent }}>
-      {/* top row: icon + label + live value */}
       <div className="sc-sl-row">
         {icon && <span className="sc-sl-icon">{icon}</span>}
         <label className="sc-sl-lbl" htmlFor={id}>{label}</label>
@@ -256,7 +303,6 @@ const Slider = ({ label, value, onChange, color, icon }) => {
           borderColor: isEmpty ? 'rgba(65,64,66,0.10)' : isNeg ? T.deficitL : `${color}38`,
         }}>{pctStr(value)}</span>
       </div>
-      {/* track */}
       <div className="sc-sl-track" dir="ltr">
         <div className="sc-sl-groove" />
         {!isEmpty && <div className="sc-sl-fill" style={{ left: `${fillLeft}%`, width: `${fillW}%` }} />}
@@ -265,8 +311,6 @@ const Slider = ({ label, value, onChange, color, icon }) => {
           min={MIN} max={MAX} step={1} value={value}
           onChange={e => onChange(Number(e.target.value))} />
       </div>
-      {/* edge labels */}
-      <div className="sc-sl-edge" dir="ltr"><span>−100%</span><span>0</span><span>+100%</span></div>
     </div>
   )
 }
@@ -315,22 +359,6 @@ const SliderAbs = ({ label, sublabel, value, onChange, color, icon, min, max, st
   )
 }
 
-/* ════════════════════════════════════════════════════════════════
-   INFO BADGE — always-portal tooltip with smart viewport positioning.
-
-   Strategy
-   ─────────
-   1. Always renders into document.body via createPortal → zero risk
-      of being clipped by any ancestor overflow/transform/stacking.
-   2. On every show, calls getBoundingClientRect() to know exactly
-      where the badge is relative to the viewport.
-   3. Vertical: prefers BELOW the badge; falls back to ABOVE when
-      there isn't room (< MIN_HEIGHT px of space below).
-   4. Horizontal: right-aligns to the badge edge, then clamps so the
-      box never crosses the left or right viewport margin.
-   5. Touch support: tap toggles; a document click listener dismisses
-      when tapping elsewhere (mouseLeave doesn't fire on touch).
-════════════════════════════════════════════════════════════════ */
 function InfoBadge({ text }) {
   const [visible, setVisible] = useState(false)
   const [ttStyle, setTtStyle] = useState({})
@@ -435,7 +463,7 @@ function InfoBadge({ text }) {
       {visible && createPortal(
         <div style={{
           ...ttStyle,
-          background: '#ffffff',
+          background: '#f8fafc',
           border: '1px solid rgba(65,64,66,0.13)',
           borderRadius: 9,
           padding: '9px 12px',
@@ -445,7 +473,7 @@ function InfoBadge({ text }) {
           wordBreak: 'break-word',
           overflowWrap: 'anywhere',
           boxShadow: '0 8px 28px rgba(65,64,66,0.16)',
-          fontFamily: "'Cairo', sans-serif",
+          fontFamily: "'TheYearofHandicrafts', sans-serif",
           direction: 'rtl',
           /* Subtle fade-in without layout jank */
           animation: 'fadeUp 0.14s ease both',
@@ -493,7 +521,7 @@ function DonutChart({ donut, defPct }) {
           {p.value} <span style={{ fontSize: 10, fontWeight: 400, color: T.txtDim }}>يوم</span>
         </div>
         <div style={{ fontSize: 10.5, color: T.txtDim, marginTop: 5 }}>
-          {total ? Math.round(p.value / total * 100) : 0}% من إجمالي الأيام
+          {total ? Math.round(p.value / total * 100) : 0}% من الإجمالي الأيام
         </div>
       </TT>
     )
@@ -525,10 +553,9 @@ function DonutChart({ donut, defPct }) {
         {donut.map(s => (
           <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: T.txtSub }}>
             <span style={{
-              width: 10, height: 10, borderRadius: '50%', background: s.color, flexShrink: 0,
-              boxShadow: `0 0 5px ${s.color}55`
+              width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0,
             }} />
-            {s.name} <strong style={{ color: s.color }}>{s.value}</strong>
+            {s.name}
           </div>
         ))}
       </div>
@@ -540,11 +567,29 @@ function DonutChart({ donut, defPct }) {
    MINI CHART 2 — MONTHLY gap (bars + styled)
 ════════════════════════════════════════════════════════════════ */
 function MonthlyBarChart({ monthly, monthlyHijri }) {
-  const [calType, setCalType] = useState('gregorian') // 'gregorian' | 'hijri'
-  const data = calType === 'hijri' ? (monthlyHijri ?? []) : monthly
+  const [viewMode, setViewMode] = useState('gap') // 'gap' | 'volume'
+  const data = monthly
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null
+    if (viewMode === 'volume') {
+      const dem = payload.find(p => p.dataKey === 'demand')?.value ?? 0
+      const sup = payload.find(p => p.dataKey === 'supply')?.value ?? 0
+      return (
+        <TT minW={180}>
+          <div style={{ fontWeight: 800, fontSize: 13, color: T.txt, marginBottom: 5 }}>{label}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 18, marginTop: 4 }}>
+            <span style={{ fontSize: 11, color: T.txtSub }}>المستهدفين</span>
+            <strong style={{ fontSize: 16, color: T.dem }}>{fmtFull(dem)}</strong>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 18, marginTop: 3 }}>
+            <span style={{ fontSize: 11, color: T.txtSub }}>سعة المرافق</span>
+            <strong style={{ fontSize: 16, color: T.sup }}>{fmtFull(sup)}</strong>
+          </div>
+          <div style={{ fontSize: 9.5, color: T.txtDim, marginTop: 3 }}>متوسط يومي / زائر</div>
+        </TT>
+      )
+    }
     const v = payload[0]?.value
     const def = v < 0
     return (
@@ -554,7 +599,7 @@ function MonthlyBarChart({ monthly, monthlyHijri }) {
           <span style={{ fontSize: 11, color: T.txtSub }}>{def ? 'متوسط العجز' : 'متوسط الفائض'}</span>
           <strong style={{ fontSize: 18, color: def ? T.deficit : T.surplus }}>{fmtFull(Math.abs(v))}</strong>
         </div>
-        <div style={{ fontSize: 9.5, color: T.txtDim, marginTop: 3 }}>سرير / يوم</div>
+        <div style={{ fontSize: 9.5, color: T.txtDim, marginTop: 3 }}>زائر / يوم</div>
       </TT>
     )
   }
@@ -579,19 +624,19 @@ function MonthlyBarChart({ monthly, monthlyHijri }) {
   }
 
   return (
-    <ChartCard title="العجز أو الفائض الشهري"
-      info="يوضح الفرق بين الطلب والطاقة الاستيعابية لكل شهر"
+    <ChartCard title="الحالة التشغيلية الشهرية"
+      info="يوضح تحليل الفجوة بين سعة المرافق وأعداد المستهدفين لإبراز فترات العجز والفائض، مع مقارنة سعة المرافق وأعداد المستهدفين لكل شهر خلال الفترة المحددة."
       accent={T.bronze} className="monthly-chart-wide"
       headerExtra={
         <div style={{ display: 'flex', background: 'rgba(65,64,66,0.06)', borderRadius: 8, padding: 2, gap: 2 }}>
-          {[{ id: 'gregorian', label: 'الشهور الميلادية' }, { id: 'hijri', label: 'الشهور الهجرية' }].map(opt => (
-            <button key={opt.id} onClick={() => setCalType(opt.id)}
+          {[{ id: 'gap', label: 'حالة الفجوة' }, { id: 'volume', label: 'السعة مقابل المستهدفين' }].map(opt => (
+            <button key={opt.id} onClick={() => setViewMode(opt.id)}
               style={{
-                padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: calType === opt.id ? 800 : 500,
+                padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: viewMode === opt.id ? 800 : 500,
                 border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all .15s',
-                background: calType === opt.id ? '#ffffff' : 'transparent',
-                color: calType === opt.id ? T.bronze : T.txtSub,
-                boxShadow: calType === opt.id ? '0 1px 4px rgba(65,64,66,0.12)' : 'none',
+                background: viewMode === opt.id ? '#ffffff' : 'transparent',
+                color: viewMode === opt.id ? T.bronze : T.txtSub,
+                boxShadow: viewMode === opt.id ? '0 1px 4px rgba(65,64,66,0.12)' : 'none',
               }}>
               {opt.label}
             </button>
@@ -600,11 +645,18 @@ function MonthlyBarChart({ monthly, monthlyHijri }) {
       }>
 
       <div style={{ display: 'flex', gap: 14, marginBottom: 8 }}>
-        {[{ c: T.deficit, l: 'عجز' }, { c: T.surplus, l: 'فائض' }].map(x => (
-          <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: T.txtDim }}>
-            <span style={{ width: 10, height: 3, background: x.c, borderRadius: 2, display: 'inline-block' }} />{x.l}
-          </div>
-        ))}
+        {viewMode === 'gap'
+          ? [{ c: T.deficit, l: 'عجز' }, { c: T.surplus, l: 'فائض' }].map(x => (
+            <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: T.txtDim }}>
+              <span style={{ width: 10, height: 3, background: x.c, borderRadius: 2, display: 'inline-block' }} />{x.l}
+            </div>
+          ))
+          : [{ c: T.sup, l: 'سعة المرافق' }, { c: T.dem, l: 'المستهدفين' }].map(x => (
+            <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: T.txtDim }}>
+              <span style={{ width: 10, height: 3, background: x.c, borderRadius: 2, display: 'inline-block' }} />{x.l}
+            </div>
+          ))
+        }
       </div>
       <ResponsiveContainer width="100%" height={160} minWidth={0}>
         <BarChart data={data} margin={{ top: 8, right: 3, left: -35, bottom: 2 }} barCategoryGap="28%">
@@ -621,7 +673,7 @@ function MonthlyBarChart({ monthly, monthlyHijri }) {
             axisLine={false} tickLine={false}
             tickFormatter={v => Math.abs(v) >= 1_000_000 ? `${(Math.abs(v) / 1_000_000).toFixed(1)}م` : Math.abs(v) >= 1000 ? `${(Math.abs(v) / 1000).toFixed(0)}ألف` : `${Math.abs(v)}`}
             width={46} />
-          <ReferenceLine y={0} stroke="rgba(65,64,66,0.28)" strokeWidth={1.5} strokeDasharray="4 3" />
+          {viewMode === 'gap' && <ReferenceLine y={0} stroke="rgba(65,64,66,0.28)" strokeWidth={1.5} strokeDasharray="4 3" />}
           <Tooltip
             content={<CustomTooltip />}
             cursor={{ fill: 'rgba(65,64,66,0.03)', radius: 4 }}
@@ -629,14 +681,19 @@ function MonthlyBarChart({ monthly, monthlyHijri }) {
             position={{ y: -10 }}
             wrapperStyle={{ zIndex: 9999 }}
           />
-          <Bar dataKey="gap" radius={[4, 4, 0, 0]} maxBarSize={20}
-            animationBegin={150} animationDuration={1100} animationEasing="ease-out">
-            {data.map((e, i) => (
-              <Cell key={i}
-                fill={e.gap < 0 ? T.deficit : T.surplus}
-                strokeWidth={0} />
-            ))}
-          </Bar>
+          {viewMode === 'gap' ? (
+            <Bar dataKey="gap" radius={[4, 4, 0, 0]} maxBarSize={20}
+              animationBegin={150} animationDuration={1100} animationEasing="ease-out">
+              {data.map((e, i) => (
+                <Cell key={i} fill={e.gap < 0 ? T.deficit : T.surplus} strokeWidth={0} />
+              ))}
+            </Bar>
+          ) : (<>
+            <Bar dataKey="supply" fill={T.sup} radius={[4, 4, 0, 0]} maxBarSize={10} opacity={0.7}
+              animationBegin={150} animationDuration={900} />
+            <Bar dataKey="demand" fill={T.dem} radius={[4, 4, 0, 0]} maxBarSize={10} opacity={0.7}
+              animationBegin={250} animationDuration={900} />
+          </>)}
         </BarChart>
       </ResponsiveContainer>
     </ChartCard>
@@ -668,17 +725,19 @@ function SeasonalRadialBar({ seasonal }) {
     )
   }
   return (
-    <ChartCard title="حالات العجز حسب الموسم" accent={T.ram}
-      info="يوضح نسبة أيام العجز في كل موسم (رمضان، الحج، باقي الأيام)">
+    <ChartCard title="نسبة العجز حسب الفترة" accent={T.ram}
+      info=" نسبة أيام العجز خلال فترة الفعاليات الكبرى والفترات الاعتيادية خلال الفترة المحددة.">
       <div style={{ position: 'relative', paddingTop: '10px' }}>
         <ResponsiveContainer width="100%" height={160} minWidth={0}>
           <RadialBarChart cx="50%" cy="50%" innerRadius="28%" outerRadius="92%"
             data={data} startAngle={180} endAngle={-180}>
             <RadialBar dataKey="defPct" cornerRadius={5}
               background={{ fill: 'rgba(65,64,66,0.04)' }}
-              animationBegin={200} animationDuration={1200} animationEasing="ease-out">
+              animationBegin={200} animationDuration={1200} animationEasing="ease-out"
+              domain={[0, 100]}>
               {data.map((e, i) => (<Cell key={i} fill={e.color} fillOpacity={0.88} />))}
             </RadialBar>
+            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} axisLine={false} />
             <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 9999 }} allowEscapeViewBox={{ x: true, y: true }} />
           </RadialBarChart>
         </ResponsiveContainer>
@@ -687,7 +746,6 @@ function SeasonalRadialBar({ seasonal }) {
             <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: T.txtSub }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
               {s.name}
-              <strong style={{ color: s.color }}>{s.defPct}%</strong>
             </div>
           ))}
         </div>
@@ -871,14 +929,14 @@ function RamadanCarousel({ periods = [] }) {
               ? <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><FiAlertTriangle size={11} /> عجز في {Math.round(p.pct)}% من الأيام</span>
               : <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><FiCheckCircle size={11} /> فائض في {Math.round(100 - p.pct)}% من الأيام</span>}
           </div>
-          <RamRow label="متوسط العجز" value={`${fmtFull(p.avg)} سرير/يوم`} />
+          <RamRow label="متوسط العجز" value={`${fmtFull(p.avg)} زائر/يوم`} />
           {p.max?.gap < 0 && (
             <div style={{ marginBottom: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 11, color: T.txtSub }}>أعلى عجز</span>
                 <strong style={{ fontSize: 12, color: T.deficit }}>
                   {fmtFull(-p.max.gap)}{' '}
-                  <span style={{ fontSize: 10, fontWeight: 500, color: T.txtDim }}>سرير/يوم</span>
+                  <span style={{ fontSize: 10, fontWeight: 500, color: T.txtDim }}>زائر/يوم</span>
                 </strong>
               </div>
               <div style={{ fontSize: 10.5, color: T.txtSub, marginTop: 1, textAlign: 'left' }}>
@@ -901,8 +959,8 @@ function RamadanCarousel({ periods = [] }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, flexShrink: 0, direction: 'rtl' }}>
         <div style={{ fontSize: 12, fontWeight: 900, color: T.txtSub, display: 'flex', alignItems: 'center', gap: 7 }}>
-          <FiMoon size={13} style={{ color: T.ram, flexShrink: 0 }} /> تحليل شهر رمضان
-          <InfoBadge text="يوضح حالة العجز أو الفائض في الطاقة الاستيعابية خلال شهر رمضان" />
+          <FiCalendar size={13} style={{ color: T.ram, flexShrink: 0 }} /> تحليل فترات الفعاليات
+          <InfoBadge text="يوضح الفترة الزمنية المرتبطة بالفعالية، مع تحليل سعة المرافق وتحديد مستويات الفائض والعجز لها خلال الفترة المحددة." />
         </div>
       </div>
 
@@ -945,14 +1003,14 @@ function RamadanCarousel({ periods = [] }) {
                           ? <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><FiAlertTriangle size={11} /> عجز في {Math.round(p.pct)}% من الأيام</span>
                           : <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><FiCheckCircle size={11} /> فائض في {Math.round(100 - p.pct)}% من الأيام</span>}
                       </div>
-                      <RamRow label="متوسط العجز" value={`${fmtFull(p.avg)} سرير/يوم`} />
+                      <RamRow label="متوسط العجز" value={`${fmtFull(p.avg)} زائر/يوم`} />
                       {p.max?.gap < 0 && (
                         <div style={{ marginBottom: 6 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                             <span style={{ fontSize: 11, color: T.txtSub }}>أعلى عجز</span>
                             <strong style={{ fontSize: 12, color: T.deficit }}>
                               {fmtFull(-p.max.gap)}{' '}
-                              <span style={{ fontSize: 10, fontWeight: 500, color: T.txtDim }}>سرير/يوم</span>
+                              <span style={{ fontSize: 10, fontWeight: 500, color: T.txtDim }}>زائر/يوم</span>
                             </strong>
                           </div>
                           <div style={{ fontSize: 10.5, color: T.txtSub, marginTop: 1, textAlign: 'left' }}>
@@ -1014,7 +1072,7 @@ function RamadanCarousel({ periods = [] }) {
 ════════════════════════════════════════════════════════════════ */
 function DemandSplitChart({ split: rawRows }) {
   const COLORS = [T.outside, T.inside]
-  const LABELS = ['معتمري الخارج', 'معتمري الداخل (مبيت)']
+  const LABELS = ['الزوار الدوليين', 'الزوار المحليين']
 
   const [moFilter, setMoFilter] = useState('all')   // 'all' | 0-11
   const [ramOnly, setRamOnly] = useState(false)
@@ -1045,7 +1103,7 @@ function DemandSplitChart({ split: rawRows }) {
           <span style={{ fontWeight: 800, fontSize: 13 }}>{p.name}</span>
         </div>
         <div style={{ fontSize: 22, fontWeight: 900, color: p.payload.fill, lineHeight: 1 }}>{pct}%</div>
-        <div style={{ fontSize: 10, color: T.txtSub, marginTop: 4 }}>{fmtFull(p.value)} سرير/يوم (متوسط)</div>
+        <div style={{ fontSize: 10, color: T.txtSub, marginTop: 4 }}>{fmtFull(p.value)} زائر/يوم (متوسط)</div>
       </TT>
     )
   }
@@ -1055,38 +1113,26 @@ function DemandSplitChart({ split: rawRows }) {
 
   return (
     <ChartCard
-      title=" الفئات من المستهدفات"
+      title="المستهدف المحلي مقابل الدولي"
       accent={T.bronzeL}
-      info="يوضح توزيع فئات الطلب بين المتوسط اليومي لأعداد المعتمرين"
+      info="يوضح توزيع فئات المستهدفين بين الزوار المحليين والدوليين"
       headerExtra={
         <>
           <select
             value={moFilter}
             onChange={e => { setMoFilter(e.target.value === 'all' ? 'all' : Number(e.target.value)); setRamOnly(false) }}
             style={{
-              background: '#ffffff', border: '1px solid rgba(65,64,66,0.15)',
+              background: '#f8fafc', border: '1px solid rgba(65,64,66,0.15)',
               borderRadius: 6, color: T.txt, fontSize: 10,
               padding: '0 8px', cursor: 'pointer', outline: 'none', direction: 'rtl',
               height: 26, boxSizing: 'border-box',
             }}>
-            <option value="all" style={{ background: '#ffffff' }}>كل الأشهر</option>
+            <option value="all" style={{ background: '#f8fafc' }}>كل الفترات</option>
             {availMos.map(m => (
-              <option key={m} value={m} style={{ background: '#ffffff' }}>{AR_MON[m]}</option>
+              <option key={m} value={m} style={{ background: '#f8fafc' }}>{AR_MON[m]}</option>
             ))}
           </select>
-          <button
-            onClick={() => { setRamOnly(v => !v); setMoFilter('all') }}
-            style={{
-              height: 26, boxSizing: 'border-box',
-              padding: '0 10px', borderRadius: 6, fontSize: 10,
-              border: `1px solid ${ramOnly ? T.ram : 'rgba(65,64,66,0.13)'}`,
-              background: ramOnly ? 'rgba(150,113,38,0.10)' : 'rgba(65,64,66,0.04)',
-              color: ramOnly ? T.ram : T.txtSub, cursor: 'pointer', transition: 'all .15s', whiteSpace: 'nowrap',
-              opacity: moFilter !== 'all' ? 0.30 : 1,
-            }}>
-            رمضان
-          </button>
-          {(moFilter !== 'all' || ramOnly) && (
+          {(moFilter !== 'all') && (
             <button
               type="button"
               aria-label="إزالة الفلتر"
@@ -1152,7 +1198,7 @@ function DemandSplitChart({ split: rawRows }) {
               position: 'absolute', top: '50%', left: '50%',
               transform: 'translate(-50%,-52%)', textAlign: 'center', pointerEvents: 'none'
             }}>
-              <div style={{ fontSize: 8, color: T.txtSub, marginTop: 0, marginBottom: 4, letterSpacing: '0.3px' }}>الإجمالي</div>
+              <div style={{ fontSize: 8, color: T.txtSub, marginTop: 0, marginBottom: 4, letterSpacing: '0.3px' }}>الالإجمالي</div>
               <div style={{ fontSize: 13, fontWeight: 900, color: T.txtSub, lineHeight: 1 }}>{fmtN(total)}</div>
               <div style={{ fontSize: 8, color: T.txtSub, marginTop: 2 }}>متوسط/يوم</div>
             </div>
@@ -1162,7 +1208,6 @@ function DemandSplitChart({ split: rawRows }) {
               <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: T.txtSub }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.fill, flexShrink: 0 }} />
                 {d.name}
-                <strong style={{ color: d.fill }}>{total ? Math.round(d.value / total * 100) : 0}%</strong>
               </div>
             ))}
           </div>
@@ -1186,21 +1231,22 @@ const GapTooltip = ({ active, payload }) => {
   const def = d.gap < 0
   return (
     <TT minW={235}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-        <div>
-          <strong style={{ fontSize: 13, color: T.txt, display: 'block' }}>
-            {d.dateLabel}{d.hijriDate ? <span style={{ color: T.txtSub }}> · {d.hijriDate}</span> : ''}
-          </strong>
-        </div>
-        <div style={{ display: 'flex', gap: 5, flexShrink: 0, marginRight: 8 }}>
-          {d.isRamadan && <span style={{ fontSize: 11, background: T.ramL, color: T.ram, padding: '2px 8px', borderRadius: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><FiMoon size={10} />رمضان</span>}
-          {d.isHajj && <span style={{ fontSize: 11, background: T.hajjL, color: T.hajj, padding: '2px 8px', borderRadius: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><FaMosque size={10} />حج</span>}
-        </div>
+      <div style={{ marginBottom: 10 }}>
+        <strong style={{ fontSize: 13, color: T.txt, display: 'block' }}>
+          {d.dateLabel}{d.hijriDate ? <span style={{ color: T.txtSub }}> · {d.hijriDate}</span> : ''}
+        </strong>
+        {d.eventNames && d.eventNames.length > 0 && (
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+            {d.eventNames.map((name, i) => (
+              <span key={i} style={{ fontSize: 10, background: T.hajjL, color: T.hajj, padding: '2px 7px', borderRadius: 8, fontWeight: 700, whiteSpace: 'nowrap' }}>{name}</span>
+            ))}
+          </div>
+        )}
       </div>
-      {[{ l: 'المستهدفات', v: d.demand, c: T.dem }, { l: 'الطاقة الاستيعابية', v: d.supply, c: T.sup }].map(r => (
+      {[{ l: 'المستهدفين', v: d.demand, c: T.dem, u: 'زائر/يوم' }, { l: 'سعة المرافق', v: d.supply, c: T.sup, u: 'كرسي/يوم' }].map(r => (
         <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', gap: 20, marginBottom: 6 }}>
           <span style={{ color: T.txtSub, fontSize: 11 }}>{r.l}</span>
-          <strong style={{ color: r.c, fontSize: 13 }}>{fmtFull(r.v)} <span style={{ fontWeight: 400, fontSize: 11, color: T.txtDim }}>سرير/يوم</span></strong>
+          <strong style={{ color: r.c, fontSize: 13 }}>{fmtFull(r.v)} <span style={{ fontWeight: 400, fontSize: 11, color: T.txtDim }}>{r.u}</span></strong>
         </div>
       ))}
       <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(65,64,66,0.10)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1220,9 +1266,9 @@ function LoadingScreen() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, background: T.bg, padding: 24 }}>
       <div style={{ position: 'relative', width: 72, height: 72 }}>
-        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid rgba(150,113,38,0.2)` }} />
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid rgba(37,99,235,0.2)` }} />
         <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid transparent`, borderTopColor: T.bronze, animation: 'spin 1s linear infinite' }} />
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, color: T.bronzeXL }}><FaMosque size={26} /></div>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, color: T.bronzeXL }}><FaChartArea size={26} /></div>
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 20, fontWeight: 800, color: T.txt }}>جاري تحميل البيانات</div>
@@ -1242,7 +1288,7 @@ function ErrorScreen({ message }) {
       <div className="card" style={{ padding: '16px 24px', color: T.deficit, fontSize: 13, maxWidth: 580, lineHeight: 1.9, borderRight: `3px solid ${T.deficit}` }}>{message}</div>
       <div className="card" style={{ padding: '16px 24px', color: T.txtSub, fontSize: 12, maxWidth: 500, lineHeight: 2 }}>
         <strong style={{ color: T.txt, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiClipboard size={13} /> الخطوات المطلوبة:</strong>
-        {['housing.xlsx في مجلد public/', 'ورقتي Supply و Demand', 'عمود Date Gregorian', 'أعد تشغيل npm run dev'].map((s, i) => (
+        {['ملفات البيانات في مجلد public/', 'بيانات السعة والمستهدفين', 'حقل التاريخ', 'أعد تشغيل npm run dev'].map((s, i) => (
           <div key={i}>{i + 1}. <code style={{ background: 'rgba(150,113,38,0.15)', padding: '1px 7px', borderRadius: 4, color: T.bronzeXL }}>{s}</code></div>
         ))}
       </div>
@@ -1254,31 +1300,27 @@ function ErrorScreen({ message }) {
    SCENARIO SIDEBAR — redesigned: chips + steppers, no sliders
 ════════════════════════════════════════════════════════════════ */
 function ScenarioSidebar({ sc, setSci, onClose }) {
-  const PCT_KEYS = ['sl', 'sf', 'sh', 'do_', 'di']
-  const supplyKeys = ['sl', 'sf', 'sh']
+  const PCT_KEYS = ['sl', 'st', 'sc', 'se', 'sp', 'do_', 'di']
+  const supplyKeys = ['sl', 'st', 'sc', 'se', 'sp']
   const demandKeys = ['do_', 'di']
 
   const hasPctChange = PCT_KEYS.some(k => (sc[k] ?? 0) !== 0)
-  const hasBnH = (sc.bnH ?? 3.1) !== 3.1
-  const hasBH = (sc.bH ?? 4.3) !== 4.3
-  const hasAnyChange = hasPctChange || hasBnH || hasBH
-  const activeCount = PCT_KEYS.filter(k => (sc[k] ?? 0) !== 0).length + (hasBnH ? 1 : 0) + (hasBH ? 1 : 0)
+  const hasAnyChange = hasPctChange
+  const activeCount = PCT_KEYS.filter(k => (sc[k] ?? 0) !== 0).length
 
   const netSup = supplyKeys.reduce((s, k) => s + (sc[k] ?? 0), 0)
-    + Math.round((sc.bnH / 3.1 - 1) * 100)
-    + Math.round((sc.bH / 4.3 - 1) * 100)
   const netDem = demandKeys.reduce((s, k) => s + (sc[k] ?? 0), 0)
   const netImpact = netSup - netDem
   const impactPos = netImpact >= 0
 
   const ALL_ITEMS = [
-    { k: 'sl', l: 'المرافق المرخصة', icon: <MdHotel size={14} />, cat: 'supply' },
-    { k: 'sf', l: 'المشاريع المستقبلية', icon: <MdConstruction size={14} />, cat: 'supply' },
-    { k: 'sh', l: 'مساكن الحجاج', icon: <FaMosque size={13} />, cat: 'supply' },
-    { k: 'do_', l: 'معتمري الخارج', icon: <MdFlightTakeoff size={14} />, cat: 'demand' },
-    { k: 'di', l: 'معتمري الداخل (مبيت)', icon: <MdDirectionsBus size={14} />, cat: 'demand' },
-    { k: 'bnH', l: 'أسرة/غرفة (خارج الحج)', icon: <MdBed size={14} />, cat: 'supply', isAbs: true, normal: 3.1 },
-    { k: 'bH', l: 'أسرة/غرفة (موسم الحج)', icon: <MdBed size={14} />, cat: 'supply', isAbs: true, normal: 4.3 },
+    { k: 'sl', l: 'الملاعب الرياضية', icon: <MdSports size={14} />, cat: 'supply' },
+    { k: 'st', l: 'المسارح', icon: <MdMusicNote size={14} />, cat: 'supply' },
+    { k: 'sc', l: 'مراكز المؤتمرات', icon: <MdConstruction size={14} />, cat: 'supply' },
+    { k: 'se', l: 'مناطق الترفيه', icon: <MdCelebration size={14} />, cat: 'supply' },
+    { k: 'sp', l: 'الساحات الموسمية', icon: <FaCity size={13} />, cat: 'supply' },
+    { k: 'do_', l: 'الزوار الدوليين', icon: <MdFlightTakeoff size={14} />, cat: 'demand' },
+    { k: 'di', l: 'الزوار المحليين', icon: <MdDirectionsBus size={14} />, cat: 'demand' },
   ]
 
   return (
@@ -1287,128 +1329,75 @@ function ScenarioSidebar({ sc, setSci, onClose }) {
       {/* ══ HEADER ══ */}
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <FiSliders size={16} style={{ color: T.bronzeXL }} />
+          <FiSliders size={14} style={{ color: T.bronzeXL }} />
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: T.txt, letterSpacing: '0.3px' }}>أداة ماذا لو؟</div>
-            <InfoBadge portal text="أداة تُمكّنك من تعديل افتراضي لبيانات الطاقة الاستيعابية والمستهدفات لمحاكاة سيناريوهات مختلفة، دون أي تأثير على البيانات الأصلية." />
-          </div>
-          <div style={{ fontSize: 9.5, color: T.txtSub, marginTop: 3, fontWeight: 600 }}>محاكاة افتراضية للبيانات</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 900, color: T.txt }}>أداة السيناريوهات</div>
+          <div style={{ fontSize: 9, color: T.txtSub, marginTop: 1, fontWeight: 500 }}>محاكاة أثر توسيع المرافق أو نمو المستهدفين</div>
         </div>
         {hasAnyChange && <div className="sidebar-active-badge">{activeCount}</div>}
         {onClose && (
           <button className="sidebar-close-btn" onClick={onClose} aria-label="إغلاق">
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
+            <FiX size={14} />
           </button>
         )}
       </div>
 
-      {/* ══ NET IMPACT BANNER ══ */}
-      {hasAnyChange && (
-        <div className={`sc-impact-banner${impactPos ? ' positive' : ' negative'}`}>
-          <span className="sc-impact-icon">{impactPos ? '↑' : '↓'}</span>
-          <div className="sc-impact-body">
-            <div className="sc-impact-label">{impactPos ? 'السيناريو يُحسّن الطاقة' : 'السيناريو يزيد الضغط'}</div>
-            <div className="sc-impact-sub">
-              الطاقة {netSup > 0 ? '+' : ''}{netSup}% · المستهدفات {netDem > 0 ? '+' : ''}{netDem}%
-            </div>
-          </div>
-          <div className={`sc-impact-delta${impactPos ? ' pos' : ' neg'}`}>
-            {impactPos ? '+' : ''}{netImpact}%
-          </div>
-        </div>
-      )}
 
-      {/* ══ SUPPLY SECTION ══ */}
+      {/* ══ SUPPLY ══ */}
       <div className="sc-vars-section">
         <div className="sc-vars-section-label supply-label">
           <span className="sc-dot supply-dot" />
-          الطاقة الاستيعابية
+          سعة المرافق
         </div>
-
         {[
-          { k: 'sl', l: 'المرافق المرخصة', icon: <MdHotel size={14} /> },
-          { k: 'sf', l: 'المشاريع المستقبلية', icon: <MdConstruction size={14} /> },
-          { k: 'sh', l: 'مساكن الحجاج', icon: <FaMosque size={13} /> },
+          { k: 'sl', l: 'الملاعب الرياضية', icon: <MdSports size={12} /> },
+          { k: 'st', l: 'المسارح', icon: <MdMusicNote size={12} /> },
+          { k: 'sc', l: 'مراكز المؤتمرات', icon: <MdConstruction size={12} /> },
+          { k: 'se', l: 'مناطق الترفيه', icon: <MdCelebration size={12} /> },
+          { k: 'sp', l: 'الساحات الموسمية', icon: <FaCity size={11} /> },
         ].map(({ k, l, icon }) => (
           <Slider key={k} label={l} icon={icon}
             value={sc[k] ?? 0} onChange={v => setSci(k, v)} color={T.greenXL} />
         ))}
       </div>
 
-      <div className="sc-section-sep" />
-
-      {/* ══ DEMAND SECTION ══ */}
-      <div className="sc-vars-section">
+      {/* ══ DEMAND ══ */}
+      <div className="sc-vars-section" style={{ marginTop: 2 }}>
         <div className="sc-vars-section-label demand-label">
           <span className="sc-dot demand-dot" />
-          المستهدفات
+          المستهدفين
         </div>
-
         {[
-          { k: 'do_', l: 'معتمري الخارج', icon: <MdFlightTakeoff size={14} /> },
-          { k: 'di', l: 'معتمري الداخل (مبيت)', icon: <MdDirectionsBus size={14} /> },
+          { k: 'do_', l: 'الزوار الدوليين', icon: <MdFlightTakeoff size={12} /> },
+          { k: 'di', l: 'الزوار المحليين', icon: <MdDirectionsCar size={12} /> },
         ].map(({ k, l, icon }) => (
           <Slider key={k} label={l} icon={icon}
             value={sc[k] ?? 0} onChange={v => setSci(k, v)} color={T.dem} />
         ))}
       </div>
 
-      <div className="sc-section-sep" />
-
-      {/* ══ BEDS / ROOM SECTION ══ */}
-      <div className="sc-vars-section">
-        <div className="sc-vars-section-label beds-label">
-          <span className="sc-dot beds-dot" />
-          معدل الأسرة لكل غرفة
-        </div>
-
-        <SliderAbs
-          label="خارج موسم الحج"
-          sublabel="سرير/غرفة"
-          value={sc.bnH ?? 3.1}
-          onChange={v => setSci('bnH', v)}
-          color={T.greenXL} icon={<MdBed size={14} />}
-          min={0.0} max={6.2} step={0.1} normal={3.1}
-        />
-        <SliderAbs
-          label="موسم الحج"
-          sublabel="سرير/غرفة"
-          value={sc.bH ?? 4.3}
-          onChange={v => setSci('bH', v)}
-          color={T.greenXL} icon={<FaMosque size={13} />}
-          min={0.0} max={8.6} step={0.1} normal={4.3}
-        />
-      </div>
-
-      {/* ══ ACTIVE CHANGES SUMMARY ══ */}
+      {/* ══ ACTIVE CHANGES ══ */}
       {hasAnyChange && (
         <div className="active-changes-panel">
           <div className="active-changes-title">
             <span className="pulse-dot" />
-            التعديلات النشطة
-            <span style={{ marginRight: 'auto', fontSize: 9, color: 'rgba(65,64,66,0.35)', fontWeight: 500 }}>{activeCount} متغيّر</span>
+            التعديلات
+            <span style={{ marginRight: 'auto', fontSize: 8, color: 'rgba(65,64,66,0.30)', fontWeight: 500 }}>{activeCount}</span>
           </div>
           <div className="sc-changes-table">
-            {ALL_ITEMS.filter(i => {
-              if (i.isAbs) return (sc[i.k] ?? i.normal) !== i.normal
-              return (sc[i.k] ?? 0) !== 0
-            }).map(i => {
+            {ALL_ITEMS.filter(i => (sc[i.k] ?? 0) !== 0).map(i => {
               const val = sc[i.k]
-              const isPos = i.isAbs ? val > i.normal : val > 0
+              const isPos = val > 0
               const color = i.cat === 'supply' ? (isPos ? T.surplus : T.deficit) : (isPos ? T.deficit : T.surplus)
-              const displayVal = i.isAbs ? val.toFixed(1) : `${isPos ? '+' : ''}${val}%`
               return (
                 <div key={i.k} className="sc-change-row">
                   <span className="sc-change-cat" style={{ background: i.cat === 'supply' ? `${T.sup}18` : `${T.dem}18`, color: i.cat === 'supply' ? T.sup : T.dem }}>
-                    {i.cat === 'supply' ? 'طاقة' : 'طلب'}
+                    {i.cat === 'supply' ? 'سعة' : 'طلب'}
                   </span>
                   <span className="sc-change-icon">{i.icon}</span>
                   <span className="sc-change-label">{i.l}</span>
-                  <span className="sc-change-val" style={{ color }}>{displayVal}</span>
+                  <span className="sc-change-val" style={{ color }}>{isPos ? '+' : ''}{val}%</span>
                 </div>
               )
             })}
@@ -1416,12 +1405,12 @@ function ScenarioSidebar({ sc, setSci, onClose }) {
         </div>
       )}
 
-      {/* ══ RESET BUTTON ══ */}
+      {/* ══ RESET ══ */}
       <div className="sc-reset-area">
         <button
           className={`reset-btn${hasAnyChange ? ' active' : ''}`}
-          onClick={() => { PCT_KEYS.forEach(k => setSci(k, 0)); setSci('bnH', 3.1); setSci('bH', 4.3) }}>
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          onClick={() => { PCT_KEYS.forEach(k => setSci(k, 0)) }}>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
             <path d="M2 8a6 6 0 1 0 1.5-3.9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             <path d="M2 4v4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -1465,7 +1454,7 @@ function DetailsModal({ yr, tableRows, onClose, onExport }) {
           flexDirection: 'column',
           overflow: 'hidden',
           borderRadius: 16,
-          background: '#ffffff',
+          background: '#f8fafc',
           border: '1px solid rgba(65,64,66,0.12)',
           boxShadow: '0 24px 64px rgba(65,64,66,0.22)'
         }}
@@ -1479,7 +1468,7 @@ function DetailsModal({ yr, tableRows, onClose, onExport }) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 900, color: T.bronzeXL }}><FiClipboard size={15} /> التفاصيل اليومية</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 900, color: T.bronzeXL }}><FiClipboard size={15} /> التفاصيل التشغيلية اليومية</span>
             <span style={{ fontSize: 11, color: T.txtSub }}>({fmtFull(filtered.length)} يوم)</span>
           </div>
 
@@ -1490,7 +1479,7 @@ function DetailsModal({ yr, tableRows, onClose, onExport }) {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="بحث بالشهر..."
+              placeholder="بحث..."
               style={{
                 padding: '6px 13px',
                 borderRadius: 8,
@@ -1544,12 +1533,12 @@ function DetailsModal({ yr, tableRows, onClose, onExport }) {
                   '#',
                   'التاريخ الميلادي',
                   'التاريخ الهجري',
-                  'الطاقة الاستيعابية',
-                  'المستهدفات',
-                  'الفجوة',
+                  'سعة المرافق',
+                  'المستهدفين',
+                  'الفارق',
                   'الحالة',
-                  'رمضان',
-                  'حج'
+                  'فعالية كبرى',
+                  'فعالية كبرى'
                 ].map(h => (
                   <th
                     key={h}
@@ -1643,11 +1632,11 @@ function DetailsModal({ yr, tableRows, onClose, onExport }) {
                     </td>
 
                     <td style={{ padding: '7px 14px', textAlign: 'center', color: T.ram }}>
-                      {r.isRamadan ? <FiMoon size={13} /> : ''}
+                      {r.isRamadan ? <FaCity size={13} /> : ''}
                     </td>
 
                     <td style={{ padding: '7px 14px', textAlign: 'center', color: T.hajj }}>
-                      {r.isHajj ? <FaMosque size={12} /> : ''}
+                      {r.isHajj ? <FaCity size={12} /> : ''}
                     </td>
                   </tr>
                 ))
@@ -1749,7 +1738,6 @@ function PageHeader({
   demTypes, toggleDemType, supTypes, toggleSupType,
   showSc, setShowSc, hasAnyScChange, activeScCount,
   onExport, onDetails, onMethodology, peakDemand, kpi, series, fileDate,
-  TPname,
 }) {
   const [showMethodology, setShowMethodology] = useState(false)
   const [activeTab, setActiveTab] = useState('core')
@@ -1759,10 +1747,10 @@ function PageHeader({
     if (!series?.length) return null
     const activeRam = series.some(r => r.isRamadan)
     const activeHajj = series.some(r => r.isHajj)
-    if (activeRam && activeHajj) return { label: 'رمضان + حج', color: T.ram }
-    if (activeRam) return { label: 'رمضان', color: T.ram }
-    if (activeHajj) return { label: 'الحج', color: T.hajj }
-    return { label: 'كل الأشهر', color: T.bronzeXL, icon: <FiCalendar size={11} /> }
+    if (activeRam && activeHajj) return { label: 'فعاليات كبرى متزامنة', color: T.ram }
+    if (activeRam) return { label: 'فعالية', color: T.ram }
+    if (activeHajj) return { label: 'الفعاليات كبرى', color: T.hajj }
+    return { label: 'كل الفترات', color: T.bronzeXL, icon: <FiCalendar size={11} /> }
   })()
 
   // Data health: any deficit days?
@@ -1775,17 +1763,18 @@ function PageHeader({
         {/* Multi-layer decorative glows */}
         <div className="page-header-inner">
 
-          {/* ── Row 1: Title + Actions ── */}
-          <div className="page-header-top">
-            {/* Title block */}
-            <div className="page-header-title-block">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <h1 className="page-header-h1">{TPname}</h1>
-              </div>
-              <p className="page-header-subtitle">
-                تحليل الطاقة الاستيعابية لنقطة اتصال {TPname}
-              </p>
-            </div>
+          {/* ── Row 1: Hero Title ── */}
+          <div style={{ textAlign: 'center', padding: '50px 0 25px' }}>
+            <h1 style={{
+              fontSize: 'clamp(42px, 4.5vw, 42px)', fontWeight: 900, lineHeight: 1.18,
+              color: T.txt, margin: '0 0 6px',
+            }}>
+              <span className="cl-shimmer-text">المرصد الوطني</span>
+              <br />
+              <span style={{ fontSize: '0.72em', fontWeight: 800, opacity: 0.85 }}>
+                لجاهزية الفعاليات الكبرى
+              </span>
+            </h1>
           </div>
 
           {/* ── Row 2: Context chips ── */}
@@ -1842,23 +1831,8 @@ function PageHeader({
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
                 <path d="M3 4h10M3 7h7M3 10h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               </svg>
-              المصطلحات و المفاهيم
+              المنهجية والمفاهيم
             </button>
-            <button className="ph-btn ph-btn-ghost" onClick={onExport}>
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2v9M4 8l4 4 4-4M2 14h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              تصدير تقرير
-            </button>
-            {peakDemand && (
-              <button className="ph-btn ph-btn-ghost" onClick={onDetails}>
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                  <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M5 6h6M5 9h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-                التفاصيل اليومية
-              </button>
-            )}
           </div>
 
           {/* ── Row 3: Filters ── */}
@@ -1880,9 +1854,9 @@ function PageHeader({
 
             {/* Demand type */}
             <div className="ph-filter-group">
-              <span className="ph-filter-label" style={{ color: `${T.dem}99` }}>المستهدفات</span>
+              <span className="ph-filter-label" style={{ color: `${T.dem}99` }}>المستهدفين</span>
               <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                {[{ id: 'outside', l: 'معتمري الخارج' }, { id: 'inside', l: 'معتمري الداخل (مبيت)' }].map(o => (
+                {[{ id: 'outside', l: 'الزوار الدوليين' }, { id: 'inside', l: 'الزوار المحليين' }].map(o => (
                   <Seg key={o.id} active={demTypes.has(o.id)} onClick={() => toggleDemType(o.id)} color={T.dem}>{o.l}</Seg>
                 ))}
               </div>
@@ -1890,9 +1864,9 @@ function PageHeader({
 
             {/* Supply type */}
             <div className="ph-filter-group">
-              <span className="ph-filter-label" style={{ color: `${T.sup}99` }}>الطاقة الاستيعابية</span>
+              <span className="ph-filter-label" style={{ color: `${T.sup}99` }}>سعة المرافق</span>
               <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                {[{ id: 'licensed', l: 'مرافق مرخصة' }, { id: 'future', l: 'المشاريع المستقبلية' }, { id: 'hajj', l: 'مساكن الحجاج' }].map(o => (
+                {[{ id: 'stadium', l: 'الملاعب الرياضية' }, { id: 'theater', l: 'المسارح' }, { id: 'conference', l: 'مراكز المؤتمرات' }, { id: 'entertainment', l: 'مناطق الترفيه' }, { id: 'plaza', l: 'الساحات الموسمية' }].map(o => (
                   <Seg key={o.id} active={supTypes.has(o.id)} onClick={() => toggleSupType(o.id)} color={T.sup}>{o.l}</Seg>
                 ))}
               </div>
@@ -1906,7 +1880,7 @@ function PageHeader({
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
                   <path d="M2 4h10M2 7h7M2 10h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                 </svg>
-                أداة ماذا لو؟                {hasAnyScChange && <span className="sc-toggle-badge">{activeScCount}</span>}
+                أداة السيناريوهات                {hasAnyScChange && <span className="sc-toggle-badge">{activeScCount}</span>}
               </button>
             </div>
           </div>
@@ -1926,7 +1900,7 @@ function PageHeader({
           }}>
           <div style={{
             width: '94%', maxWidth: 720,
-            background: '#ffffff',
+            background: '#f8fafc',
             borderRadius: 16,
             border: '1px solid rgba(65,64,66,0.10)',
             boxShadow: '0 24px 60px rgba(65,64,66,0.18)',
@@ -1942,7 +1916,7 @@ function PageHeader({
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               flexShrink: 0,
             }}>
-              <span style={{ fontSize: 14, fontWeight: 900, color: T.txt }}>المصطلحات و المفاهيم</span>
+              <span style={{ fontSize: 14, fontWeight: 900, color: T.txt }}>المنهجية والمفاهيم</span>
               <button
                 onClick={() => setShowMethodology(false)}
                 style={{
@@ -1959,7 +1933,7 @@ function PageHeader({
             {/* ── Tab Bar ── */}
             {(() => {
               const tabs = [
-                { id: 'core', label: 'المفاهيم الأساسية' },
+                { id: 'core', label: 'الإطار التحليلي' },
                 { id: 'terms', label: 'المصطلحات' },
                 { id: 'assumptions', label: 'الفرضيات' },
 
@@ -2002,9 +1976,9 @@ function PageHeader({
                   {/* المعادلة البصرية */}
                   <div className="core-formula-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', gap: 8, alignItems: 'center' }}>
                     {[
-                      { label: 'الطاقة الاستيعابية', sub: 'السعة القصوى', border: `${T.sup}33`, color: T.sup },
+                      { label: 'سعة المرافق', sub: 'السعة القصوى', border: `${T.sup}33`, color: T.sup },
                       { sym: '−' },
-                      { label: 'المستهدفات', sub: 'الطلب المتوقع', border: `${T.dem}33`, color: T.dem },
+                      { label: 'المستهدفين', sub: 'الزوار', border: `${T.dem}33`, color: T.dem },
                       { sym: '=' },
                       { label: 'الفجوة', sub: 'عجز أو فائض', border: 'rgba(212,170,82,0.2)', color: 'rgba(212,170,82,0.7)' },
                     ].map((item, i) =>
@@ -2020,15 +1994,15 @@ function PageHeader({
                     )}
                   </div>
 
-                  {/* عجز / فائض */}
+                  {/* ضغط / فائض */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <div style={{ background: `${T.deficit}08`, border: `1px solid ${T.deficit}22`, borderRadius: 10, padding: '12px 14px' }}>
                       <div style={{ fontSize: 12, fontWeight: 800, color: `${T.deficit}cc`, marginBottom: 5, display: 'flex', alignItems: 'center', gap: 6 }}><FiAlertTriangle size={13} /> عجز</div>
-                      <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.7 }}>الطلب أعلى من الطاقة الاستيعابية</div>
+                      <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.7 }}>المستهدفين أعلى من سعة المرافق</div>
                     </div>
                     <div style={{ background: `${T.surplus}08`, border: `1px solid ${T.surplus}22`, borderRadius: 10, padding: '12px 14px' }}>
                       <div style={{ fontSize: 12, fontWeight: 800, color: `${T.surplus}cc`, marginBottom: 5, display: 'flex', alignItems: 'center', gap: 6 }}><FiCheckCircle size={13} /> فائض</div>
-                      <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.7 }}>الطاقة الاستيعابية أعلى من الطلب</div>
+                      <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.7 }}>سعة المرافق أعلى من المستهدفين</div>
                     </div>
                   </div>
 
@@ -2037,9 +2011,9 @@ function PageHeader({
                     <div style={{ fontSize: 11.5, fontWeight: 800, color: T.txtSub, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}><MdStraighten size={15} /> الوحدات المستخدمة</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                       {[
-                        { unit: 'سرير / يوم', note: 'العدد الإجمالي للأسرة في اليوم الواحد' },
-                        { unit: 'معتمر / يوم', note: 'العدد الإجمالي المتوقع للمعتمرين' },
-                        { unit: 'سرير / غرفة', note: 'العدد الإجمالي للأسرة في الغرفة الواحدة' },
+                        { unit: 'كرسي / يوم', note: 'إجمالي سعة المرافق المتاحة يومياً بالمقاعد/الكراسي' },
+                        { unit: 'زائر / يوم', note: 'العدد الإجمالي المتوقع للزوار يومياً' },
+
                       ].map(({ unit, note }) => (
                         <div key={unit} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(65,64,66,0.04)', borderRadius: 7, padding: '8px 12px' }}>
                           <span style={{ fontSize: 12, fontWeight: 800, color: T.txtSub, width: 85, flexShrink: 0 }}>{unit}</span>
@@ -2056,7 +2030,7 @@ function PageHeader({
               {activeTab === 'terms' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-                  {/* ── الطاقة الاستيعابية + أنواعها ── */}
+                  {/* ── سعة المرافق + أنواعها ── */}
                   <div style={{
                     border: `1px solid ${T.sup}33`,
                     borderRadius: 12, overflow: 'hidden',
@@ -2069,16 +2043,18 @@ function PageHeader({
                     }}>
                       <MdCircle size={18} style={{ color: T.sup, marginTop: 2 }} />
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 900, color: T.sup, marginBottom: 3 }}>الطاقة الاستيعابية</div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>إجمالي السعة المتاحة للإيواء</div>
-                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الحد الأقصى من الأسرّة التي تستطيع منظومة الإيواء توفيرها يومياً، وتشمل ثلاثة مكوّنات:</div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: T.sup, marginBottom: 3 }}>مرافق الفعاليات</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>إجمالي سعة مرافق الفعاليات الكبرى</div>
+                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الحد الأقصى من عدد الأشخاص الذين تستوعبهم مرافق الفعاليات يومياً (بالكراسي/المقاعد)، وتشمل:</div>
                       </div>
                     </div>
                     <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {[
-                        { icon: <MdHotel size={15} style={{ color: T.sup }} />, term: 'المرافق المرخصة', simple: 'الفنادق والشقق الفندقية المشغّلة حالياً', detail: 'المنشآت الفندقية القائمة والحاصلة على تراخيص تشغيل سارية، وتمثّل الطاقة الفعلية الموجودة على أرض الواقع.' },
-                        { icon: <MdConstruction size={15} style={{ color: T.sup }} />, term: 'المشاريع المستقبلية', simple: 'المنشآت الفندقية قيد التطوير أو المخطط لها', detail: 'مشاريع الإيواء التي لم تدخل التشغيل بعد، وتُضاف إلى الطاقة الاستيعابية بحسب الجدول الزمني المتوقع لتشغيلها.' },
-                        { icon: <FaMosque size={14} style={{ color: T.sup }} />, term: 'مساكن الحجاج', simple: 'وحدات الإيواء المخصصة لموسم الحج', detail: 'وحدات سكنية مخصصة لاستضافة الحجاج خلال موسم الحج، وتشمل مختلف أنواع الوحدات السكنية المتاحة في مكة المكرمة.' },
+                        { icon: <MdSportsSoccer size={15} style={{ color: T.sup }} />, term: 'الملاعب الرياضية', simple: 'ملاعب كرة القدم، حلبات السباق، مناطق الرياضات الإلكترونية', detail: 'تستخدم في استضافة فورمولا 1، فورمولا إي، كأس العالم 2034، كأس العالم للرياضات الإلكترونية. تمثّل الجزء الأكبر من طاقة الاستيعاب خلال الفعاليات الرياضية الكبرى.' },
+                        { icon: <MdMusicNote size={15} style={{ color: T.sup }} />, term: 'المسارح', simple: 'مسارح الحفلات والعروض الحية', detail: 'تستخدم في استضافة ساوندستورم (MDLBEAST) والعروض الترفيهية ضمن المواسم. تشمل المسارح المفتوحة والمغلقة.' },
+                        { icon: <MdDiamond size={15} style={{ color: T.sup }} />, term: 'مراكز المؤتمرات', simple: 'مراكز المعارض والمؤتمرات الدولية', detail: 'تستخدم في استضافة مبادرة مستقبل الاستثمار (FII) وإكسبو 2030. تشمل مركز الملك عبدالعزيز الدولي للمؤتمرات ومرافق إكسبو.' },
+                        { icon: <MdCelebration size={15} style={{ color: T.sup }} />, term: 'مناطق الترفيه', simple: 'المناطق الترفيهية المفتوحة والمغلقة', detail: 'تستخدم خلال موسم الرياض وموسم جدة. تشمل بوليفارد الرياض، بوليفارد وورلد، واجهة جدة البحرية، وغيرها.' },
+                        { icon: <FaCity size={14} style={{ color: T.sup }} />, term: 'الساحات الموسمية', simple: 'الساحات والمناطق التراثية المفتوحة', detail: 'تستخدم خلال موسم الدرعية والفعاليات التراثية. تشمل حي الطريف التاريخي وساحات الفعاليات المؤقتة.' },
                       ].map(({ icon, term, simple, detail }) => (
                         <div key={term} style={{
                           background: 'rgba(65,64,66,0.02)',
@@ -2098,7 +2074,7 @@ function PageHeader({
                     </div>
                   </div>
 
-                  {/* ── المستهدفات + أنواعها ── */}
+                  {/* ── المستهدفين + أنواعها ── */}
                   <div style={{
                     border: `1px solid ${T.dem}33`,
                     borderRadius: 12, overflow: 'hidden',
@@ -2111,15 +2087,15 @@ function PageHeader({
                     }}>
                       <MdDiamond size={18} style={{ color: T.dem, marginTop: 2 }} />
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 900, color: T.dem, marginBottom: 3 }}>المستهدفات</div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>إجمالي الطلب المتوقع على الإيواء</div>
-                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الحمل اليومي المتوقع على منظومة الإيواء، ويتكوّن من نوعين:</div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: T.dem, marginBottom: 3 }}>المستهدفين</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>إجمالي أعداد المستهدفين المتوقعينين</div>
+                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>العدد اليومي المتوقع من الحضور المستهدف استقطابهم، ويتكوّن من فئتين:</div>
                       </div>
                     </div>
                     <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {[
-                        { icon: <MdDirectionsBus size={15} style={{ color: T.inside }} />, term: 'معتمري الداخل (مبيت)', color: T.inside, simple: 'المعتمرون المقيمون داخل المملكة الذين يبيتون ليلة أو أكثر', detail: 'المعتمرون القادمون من داخل المملكة ويحتاجون إلى إيواء لمدة ليلة واحدة أو أكثر أثناء أداء العمرة.' },
-                        { icon: <MdFlightTakeoff size={15} style={{ color: T.outside }} />, term: 'معتمري الخارج', color: T.outside, simple: 'المعتمرون القادمون من خارج المملكة', detail: 'المعتمرون الوافدون من خارج المملكة، ويكون متوسط إقامتهم أطول مقارنةً بمعتمري الداخل.' },
+                        { icon: <MdDirectionsCar size={15} style={{ color: T.outside }} />, term: 'الزوار المحليين', color: T.outside, simple: 'الزوار من داخل المملكة', detail: 'المواطنون والمقيمون الذين يحضرون الفعاليات في المدن المستضيفة والمواسم، ويكون متوسط إقامتهم أقصر.' },
+                        { icon: <MdFlightTakeoff size={15} style={{ color: T.outside }} />, term: 'الزوار الدوليين', color: T.outside, simple: 'الزوار من خارج المملكة', detail: 'الزوار الدوليون الوافدون لحضور الفعاليات الكبرى، ويكون متوسط إقامتهم أطول.' },
                       ].map(({ icon, term, color, simple, detail }) => (
                         <div key={term} style={{
                           background: 'rgba(65,64,66,0.02)',
@@ -2139,7 +2115,7 @@ function PageHeader({
                     </div>
                   </div>
 
-                  {/* ── الفجوة + أنواعها ── */}
+                  {/* ── فارق الجاهزية + أنواعها ── */}
                   <div style={{
                     border: '1px solid rgba(212,170,82,0.25)',
                     borderRadius: 12, overflow: 'hidden',
@@ -2153,14 +2129,14 @@ function PageHeader({
                       <MdSwapHoriz size={18} style={{ color: 'rgba(212,170,82,0.8)', marginTop: 2 }} />
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 900, color: 'rgba(212,170,82,0.8)', marginBottom: 3 }}>الفجوة</div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>الفرق بين الطاقة الاستيعابية والمستهدفات</div>
-                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الناتج اليومي من طرح المستهدفات من الطاقة الاستيعابية، ويظهر في حالتين:</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>الفرق بين سعة المرافق والمستهدفين</div>
+                        <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الفرق اليومي بين سعة المرافق وأعداد المستهدفينين، ويظهر في حالتين:</div>
                       </div>
                     </div>
                     <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {[
-                        { icon: <FiTrendingDown size={15} style={{ color: T.deficit }} />, term: 'العجز', color: T.deficit, simple: 'المستهدفات تتجاوز الطاقة الاستيعابية المتاحة', detail: 'حالة يتجاوز فيها الطلب على الإيواء السعة المتاحة، وكلما تكرر العجز زادت الحاجة للتدخل وزيادة المعروض.' },
-                        { icon: <FiTrendingUp size={15} style={{ color: T.surplus }} />, term: 'الفائض', color: T.surplus, simple: 'الطاقة الاستيعابية تتجاوز المستهدفات', detail: 'حالة تكون فيها السعة المتاحة أعلى من الطلب — قد يمثّل هامش أمان مقصوداً أو فرصة لتحسين الاستغلال.' },
+                        { icon: <FiTrendingDown size={15} style={{ color: T.deficit }} />, term: 'عجز', color: T.deficit, simple: 'أعداد المستهدفين تتجاوز سعة المرافق المتاحة', detail: 'يحتاج توسع أو تحويل لمرافق بديلة.' },
+                        { icon: <FiTrendingUp size={15} style={{ color: T.surplus }} />, term: 'فائض', color: T.surplus, simple: 'سعة المرافق تفوق أعداد المستهدفين', detail: 'حد الأمان و فرصة لاستقطاب مستهدفين إضافيين.' },
                       ].map(({ icon, term, color, simple, detail }) => (
                         <div key={term} style={{
                           background: 'rgba(65,64,66,0.02)',
@@ -2199,12 +2175,13 @@ function PageHeader({
                       نطاق الدراسة
                     </div>
                     <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 8, lineHeight: 1.6 }}>
-                      نطاق إيواء مكة المكرمة الذي تم دراسته
+                      النطاق الجغرافي والقطاعي للمنصة
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {[
-                        'الفنادق في مكة المكرمة',
-                        'مساكن الحجاج في مكة المكرمة',
+                        'مرافق الفعاليات: الملاعب الرياضية، المسارح، مراكز المؤتمرات، مناطق الترفيه، الساحات الموسمية',
+                        'توقعات أعداد الزوار الدوليين والمحليين خلال الفعاليات الكبرى',
+                        'المدن المستهدفة: الرياض · جدة · نيوم · العلا · الدمام · أبها · الدرعية',
                       ].map((t, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: T.txtDim }}>
                           <span style={{
@@ -2219,7 +2196,7 @@ function PageHeader({
                     </div>
                   </div>
 
-                  {/* ── معادلة الطلب (المستهدفات) ── */}
+                  {/* ── معادلة المستهدفين ── */}
                   <div style={{
                     border: `1px solid ${T.dem}33`,
                     borderRadius: 12, overflow: 'hidden',
@@ -2233,7 +2210,7 @@ function PageHeader({
                     }}>
                       <MdDiamond size={14} style={{ color: T.dem }} />
                       <span style={{ fontSize: 12, fontWeight: 900, color: T.dem }}>
-                        معادلة احتساب الطلب (المستهدفات)
+                        معادلة احتساب المستهدفين
                       </span>
                     </div>
                     <div style={{ padding: '13px' }}>
@@ -2250,32 +2227,32 @@ function PageHeader({
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           textAlign: 'center', fontSize: 10.5, fontWeight: 800, lineHeight: 1.5,
                         }}>
-                          إجمالي الطلب على إيواء مكة المكرمة
+                          الإجمالي المتوقع للزوار يومياً
                         </div>
                         <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>=</div>
                         <EquationBlock
-                          title="الحمل اليومي لمعتمري الداخل (مبيت)"
+                          title="الحمل اليومي للزوار المحليين"
                           color={T.dem}
                           transparent
                           rows={[
-                            { label: 'عدد المعتمرين المستهدفين', sub: '(معتمر)' },
-                            { label: 'متوسط الإقامة لمعتمري الداخل', sub: '(ليلة)' },
+                            { label: 'عدد المستهدفينين', sub: '(زائر)' },
+                            { label: 'متوسط مدة الإقامة', sub: '(ليلة)' },
                           ]}
                         />
                         <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>+</div>
                         <EquationBlock
-                          title="الحمل اليومي لمعتمري الخارج"
+                          title="الحمل اليومي للزوار الدوليين"
                           color={T.dem}
                           transparent
                           rows={[
-                            { label: 'عدد المعتمرين المستهدفين', sub: '(معتمر)' },
-                            { label: 'متوسط الإقامة لمعتمري الخارج', sub: '(ليلة)' },
+                            { label: 'عدد المستهدفينين', sub: '(زائر)' },
+                            { label: 'متوسط مدة الإقامة', sub: '(ليلة)' },
                           ]}
                         />
                       </div>
                       <div style={{
                         marginTop: 11, padding: '9px 11px',
-                        background: '#fff',
+                        background: '#f8fafc',
                         border: '1px solid rgba(65,64,66,0.09)',
                         borderRadius: 8,
                         display: 'flex', gap: 8, alignItems: 'flex-start',
@@ -2284,7 +2261,7 @@ function PageHeader({
                         <div>
                           <div style={{ fontSize: 11, fontWeight: 800, color: T.txtSub, marginBottom: 3 }}>أبرز الملاحظات</div>
                           <div style={{ fontSize: 10.5, color: T.txtDim, lineHeight: 1.7 }}>
-                            التغيير في متوسط عدد ليالي المبيت يؤثر على الحمل اليومي لقطاع الإيواء بالزيادة أو النقصان بشكل واضح.
+                            العدد المستهدف يعتمد على حجم الفعالية وموقعها ومدتها، كلما زادت الفعاليات المتزامنة ارتفع الطلب.
                           </div>
                         </div>
                       </div>
@@ -2303,9 +2280,9 @@ function PageHeader({
                       borderBottom: `1px solid ${T.sup}22`,
                       display: 'flex', alignItems: 'center', gap: 7,
                     }}>
-                      <MdHotel size={14} style={{ color: T.sup }} />
+                      <MdSports size={14} style={{ color: T.sup }} />
                       <span style={{ fontSize: 12, fontWeight: 900, color: T.sup }}>
-                        معادلة احتساب الطاقات الاستيعابية
+                        معادلة احتساب سعة المرافق
                       </span>
                     </div>
                     <div style={{ padding: '13px' }}>
@@ -2321,7 +2298,7 @@ function PageHeader({
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           textAlign: 'center', fontSize: 10.5, fontWeight: 800, lineHeight: 1.5,
                         }}>
-                          الطاقات الاستيعابية للإيواء في مكة المكرمة
+                          إجمالي سعة المرافق
                         </div>
                         <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>=</div>
                         <div style={{
@@ -2331,33 +2308,33 @@ function PageHeader({
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           textAlign: 'center', fontSize: 10, fontWeight: 700, color: T.txtSub, lineHeight: 1.5,
                         }}>
-                          نسبة الإشغال لمرافق الإيواء
+                          نسبة الكفاءة التشغيلية
                         </div>
                         <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>×</div>
                         <EquationBlock
-                          title="عدد الأسرّة للمشاريع المستقبلية"
+                          title="المسارح ومراكز المؤتمرات"
                           color={T.sup}
                           transparent
                           rows={[
-                            { label: 'عدد الغرف', sub: '(غرفة / يوم)' },
-                            { label: 'متوسط عدد الأسرّة في الغرفة', sub: '(سرير / غرفة)' },
+                            { label: 'عدد المقاعد', sub: '(مقعد / يوم)' },
+                            { label: 'معامل التشغيل', sub: '(نسبة)' },
                           ]}
                         />
 
                         <div className="formula-op" style={{ fontSize: 18, color: T.txtDim, alignSelf: 'center', textAlign: 'center' }}>+</div>
                         <EquationBlock
-                          title="عدد الأسرّة للمرافق المرخصة"
+                          title="الملاعب + مناطق الترفيه + الساحات"
                           color={T.sup}
                           transparent
                           rows={[
-                            { label: 'عدد الغرف', sub: '(غرفة / يوم)' },
-                            { label: 'متوسط عدد الأسرّة في الغرفة', sub: '(سرير / غرفة)' },
+                            { label: 'الطاقة الاستيعابية', sub: '(زائر / يوم)' },
+                            { label: 'معامل التشغيل', sub: '(نسبة)' },
                           ]}
                         />
                       </div>
                       <div style={{
                         marginTop: 11, padding: '9px 11px',
-                        background: '#fff',
+                        background: '#f8fafc',
                         border: '1px solid rgba(65,64,66,0.09)',
                         borderRadius: 8,
                         display: 'flex', gap: 8, alignItems: 'flex-start',
@@ -2366,7 +2343,7 @@ function PageHeader({
                         <div>
                           <div style={{ fontSize: 11, fontWeight: 800, color: T.txtSub, marginBottom: 3 }}>أبرز الملاحظات</div>
                           <div style={{ fontSize: 10.5, color: T.txtDim, lineHeight: 1.7 }}>
-                            تم الاستناد إلى أعداد الفنادق والشقق الفندقية المشغلة وغير المشغلة بحسب ما ورد في خطة زيادة المعروض 2023 من وزارة السياحة.
+                            تم الاستناد إلى بيانات هيئة الترفيه ووزارة الرياضة حول سعة مرافق الفعاليات في إطار رؤية 2030.
                           </div>
                         </div>
                       </div>
@@ -2384,23 +2361,37 @@ function PageHeader({
                       borderBottom: '1px solid rgba(65,64,66,0.09)',
                       display: 'flex', alignItems: 'center', gap: 7,
                     }}>
-                      <FaMosque size={13} style={{ color: T.bronze }} />
+                      <FaCity size={13} style={{ color: T.bronze }} />
                       <span style={{ fontSize: 12, fontWeight: 900, color: T.txt }}>
-                        أبرز الفرضيات لعام 2026
+                        أبرز الفرضيات
                       </span>
                     </div>
                     <div style={{ padding: '13px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
+                      {/* تعريف المواسم */}
+                      <div style={{
+                        background: `${T.ram}0a`,
+                        border: `1px solid ${T.ram}22`,
+                        borderRadius: 10, padding: '12px 14px',
+                      }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: T.ram, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <FiCalendar size={13} /> تعريف الفعاليات الكبرى
+                        </div>
+                        <div style={{ fontSize: 10.5, color: T.txtDim, lineHeight: 1.8 }}>
+                          الفعاليات الكبرى هي الفترات التي تشهد ارتفاعاً ملحوظاً في المستهدفين نتيجة الفعاليات الرياضية والترفيهية والمؤتمرات الدولية، مما يزيد العجز التشغيلي على المرافق والنقل والخدمات.
+                        </div>
+                      </div>
 
-                      {/* الطاقات الاستيعابية */}
+                      {/* مرافق الفعاليات */}
                       <div>
                         <div style={{ fontSize: 11, fontWeight: 800, color: T.sup, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <MdHotel size={13} /> الطاقات الاستيعابية
+                          <MdBarChart size={13} /> مرافق الفعاليات
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 }}>
                           {[
-                            { v: '200,057', u: 'غرفة / اليوم', l: 'الفنادق والشقق الفندقية' },
-                            { v: '1,700,000', u: 'سرير / اليوم', l: 'وحدات مساكن الحجاج' },
+                            { v: '180,000', u: 'كرسي / يوم', l: 'الملاعب الرياضية' },
+                            { v: '140,000', u: 'كرسي / يوم', l: 'المسارح ومراكز المؤتمرات' },
+                            { v: '160,000', u: 'كرسي / يوم', l: 'مناطق الترفيه والساحات' },
                           ].map((k, i) => (
                             <div key={i} style={{
                               background: T.supBg,
@@ -2408,24 +2399,24 @@ function PageHeader({
                               borderRadius: 8, padding: '10px 11px',
                             }}>
                               <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 4, lineHeight: 1.4 }}>{k.l}</div>
-                              <div style={{ fontSize: 16, fontWeight: 900, color: T.sup, lineHeight: 1.1 }}>
-                                {k.v} <span style={{ fontSize: 10, fontWeight: 600, color: T.txtSub }}>{k.u}</span>
+                              <div style={{ fontSize: 14, fontWeight: 900, color: T.sup, lineHeight: 1.1 }}>
+                                {k.v} <span style={{ fontSize: 9, fontWeight: 600, color: T.txtSub }}>{k.u}</span>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      {/* المستهدفات */}
+                      {/* المستهدفين */}
                       <div>
                         <div style={{ fontSize: 11, fontWeight: 800, color: T.dem, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <MdDiamond size={13} /> المستهدفات
+                          <MdDiamond size={13} /> توقعات المستهدفين
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 }}>
                           {[
-                            { v: '100%', l: 'نسبة المعتمرين المستهدفين في الإيواء' },
-                            { v: '9.3', u: 'ليال', l: 'متوسط الإقامة لمعتمري الخارج' },
-                            { v: '3.3', u: 'ليال', l: 'متوسط الإقامة لمعتمري الداخل' },
+                            { v: '10%', l: 'معدل النمو السنوي المتوقع' },
+                            { v: '4.0', u: 'ليال', l: 'متوسط إقامة الزوار الدوليين' },
+                            { v: '1.8', u: 'ليال', l: 'متوسط إقامة الزوار المحليين' },
                           ].map((k, i) => (
                             <div key={i} style={{
                               background: T.demBg,
@@ -2441,33 +2432,6 @@ function PageHeader({
                         </div>
                       </div>
 
-                      {/* عدد الأسرّة */}
-                      <div>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: T.txtSub, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <MdBed size={13} /> عدد الأسرّة
-                        </div>
-                        <div style={{
-                          background: 'rgba(65,64,66,0.03)',
-                          border: '1px solid rgba(65,64,66,0.10)',
-                          borderRadius: 8, padding: '10px 11px',
-                        }}>
-                          <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 4 }}>متوسط عدد الأسرّة في الغرفة خارج موسم الحج</div>
-                          <div style={{ fontSize: 18, fontWeight: 900, color: T.txt, lineHeight: 1.1 }}>
-                            3.1 <span style={{ fontSize: 10, fontWeight: 600, color: T.txtSub }}>سرير / غرفة</span>
-                          </div>
-                        </div>
-                        <div style={{
-                          background: 'rgba(65,64,66,0.03)',
-                          border: '1px solid rgba(65,64,66,0.10)',
-                          borderRadius: 8, padding: '10px 11px', marginTop: '5px'
-                        }}>
-                          <div style={{ fontSize: 10, color: T.txtDim, marginBottom: 4 }}>متوسط عدد الأسرّة في الغرفة خلال موسم الحج</div>
-                          <div style={{ fontSize: 18, fontWeight: 900, color: T.txt, lineHeight: 1.1 }}>
-                            4.3 <span style={{ fontSize: 10, fontWeight: 600, color: T.txtSub }}>سرير / غرفة</span>
-                          </div>
-
-                        </div>
-                      </div>
 
                     </div>
                   </div>
@@ -2504,35 +2468,34 @@ function Dashboard({ db, fileDate }) {
   const isAllYrs = (years.length ? years : YEARS).every(y => yrs.has(y))
   const [demTypes, setDemTypes] = useState(new Set(['outside', 'inside']))
   const toggleDemType = k => setDemTypes(prev => { const n = new Set(prev); n.has(k) ? (n.size > 1 && n.delete(k)) : n.add(k); return n })
-  const [supTypes, setSupTypes] = useState(new Set(['licensed', 'future', 'hajj']))
+  const [supTypes, setSupTypes] = useState(new Set(['stadium', 'theater', 'conference', 'entertainment', 'plaza']))
   const toggleSupType = k => setSupTypes(prev => { const n = new Set(prev); n.has(k) ? (n.size > 1 && n.delete(k)) : n.add(k); return n })
   const [view, setView] = useState('lines')
   const [scope, setScope] = useState('all')
-  const [showModal, setModal] = useState(false)
-  const [sc, setSc] = useState({ sl: 0, sf: 0, sh: 0, do_: 0, di: 0, bnH: 3.1, bH: 4.3 })
+  // Details modal removed
+  const [sc, setSc] = useState({ sl: 0, st: 0, sf: 0, sh: 0, sp: 0, do_: 0, di: 0 })
   const setSci = (k, v) => setSc(s => ({ ...s, [k]: v }))
 
   /* Scenarios */
   const adjusted = useMemo(() => rows.map(r => {
     const apply = scope === 'all' || yrs.has(r.yr)
     const a = (v, k) => v != null ? Math.round(v * (1 + (apply ? sc[k] : 0) / 100)) : null
-    const util = r.utilPct ?? 0.8
 
-    const bedsPerRoom = apply
-      ? (r.isHajj ? sc.bH : sc.bnH)
-      : (r.isHajj ? (r.bedsHajj ?? 4.3) : (r.bedsNonHajj ?? 3.1))
+    // Raw data has 3 fields: sl (stadiums), sf (theaters+conferences), sh (entertainment+plazas)
+    // Data already includes event-period adjustments
+    const rawSl = (r.sl ?? 0)
+    const rawTheater = (r.sf ?? 0) * 0.4
+    const rawConf = (r.sf ?? 0) * 0.6
+    const rawEnt = (r.sh ?? 0) * 0.6
+    const rawPlaza = (r.sh ?? 0) * 0.4
 
     return {
       ...r,
-      // asl = sl × bedsNonHajj   (util applied later in series)
-      asl: r.sl != null ? Math.round(r.sl * bedsPerRoom * (1 + (apply ? sc.sl : 0) / 100)) : null,
-
-      // asf = sf   (NO beds/room multiplier per formula — only util applied later in series)
-      asf: r.sf != null ? Math.round(r.sf * (1 + (apply ? sc.sf : 0) / 100)) : null,
-
-      // ash = sh   (raw value — no beds factor, no util)
-      ash: r.sh != null ? Math.round(r.sh * (1 + (apply ? sc.sh : 0) / 100)) : null,
-
+      asl: Math.round(rawSl * (1 + (apply ? (sc.sl ?? 0) : 0) / 100)),
+      ast: Math.round(rawTheater * (1 + (apply ? (sc.st ?? 0) : 0) / 100)),
+      asc: Math.round(rawConf * (1 + (apply ? (sc.sc ?? 0) : 0) / 100)),
+      ase: Math.round(rawEnt * (1 + (apply ? (sc.se ?? 0) : 0) / 100)),
+      asp: Math.round(rawPlaza * (1 + (apply ? (sc.sp ?? 0) : 0) / 100)),
       ado: a(r.do_, 'do_'), adi: a(r.di, 'di'),
     }
   }), [rows, sc, scope, yrs])
@@ -2543,7 +2506,12 @@ function Dashboard({ db, fileDate }) {
   const series = useMemo(() => yrRows.map(r => {
     const dem = (demTypes.has('outside') ? (r.ado ?? 0) : 0) + (demTypes.has('inside') ? (r.adi ?? 0) : 0)
     const util = r.utilPct ?? 0.8
-    const sup = Math.round(((supTypes.has('licensed') ? (r.asl ?? 0) : 0) + (supTypes.has('future') ? (r.asf ?? 0) : 0)) * util) + (supTypes.has('hajj') ? (r.ash ?? 0) : 0)
+    const stadium = supTypes.has('stadium') ? (r.asl ?? 0) : 0
+    const theater = supTypes.has('theater') ? (r.ast ?? 0) : 0
+    const conference = supTypes.has('conference') ? (r.asc ?? 0) : 0
+    const entertainment = supTypes.has('entertainment') ? (r.ase ?? 0) : 0
+    const plaza = supTypes.has('plaza') ? (r.asp ?? 0) : 0
+    const sup = Math.round((stadium + theater + conference) * util) + entertainment + plaza
     const gap = sup - dem
     return {
       dateKey: r.key, date: r.date,
@@ -2552,6 +2520,7 @@ function Dashboard({ db, fileDate }) {
       demand: dem || null, supply: sup || null, gap,
       deficit: gap < 0 ? -gap : 0, surplus: gap > 0 ? gap : 0,
       isRamadan: r.isRamadan, isHajj: r.isHajj,
+      eventNames: getEventNames(r.date),
       ado: demTypes.has('outside') ? (r.ado ?? 0) : 0,
       adi: demTypes.has('inside') ? (r.adi ?? 0) : 0,
     }
@@ -2595,8 +2564,8 @@ function Dashboard({ db, fileDate }) {
     const rows = yrRows.map(r => {
       const dem = (demTypes.has('outside') ? (r.ado ?? 0) : 0) + (demTypes.has('inside') ? (r.adi ?? 0) : 0)
       const util = r.utilPct ?? 0.8
-      const supBase = Math.round((supTypes.has('licensed') ? (r.asl ?? 0) : 0) * util) + (supTypes.has('hajj') ? (r.ash ?? 0) : 0)
-      const supFull = Math.round(((supTypes.has('licensed') ? (r.asl ?? 0) : 0) + (r.asf ?? 0)) * util) + (supTypes.has('hajj') ? (r.ash ?? 0) : 0)
+      const supBase = Math.round((supTypes.has('stadium') ? (r.asl ?? 0) : 0) * util) + (supTypes.has('entertainment') ? (r.ase ?? 0) : 0) + (supTypes.has('plaza') ? (r.asp ?? 0) : 0)
+      const supFull = Math.round(((supTypes.has('stadium') ? (r.asl ?? 0) : 0) + (r.ast ?? 0) + (r.asc ?? 0)) * util) + (supTypes.has('entertainment') ? (r.ase ?? 0) : 0) + (supTypes.has('plaza') ? (r.asp ?? 0) : 0)
       return { dem, supBase, supFull }
     }).filter(r => r.dem > 0)
     if (!rows.length) return null
@@ -2612,26 +2581,22 @@ function Dashboard({ db, fileDate }) {
   }, [yrRows, demTypes, supTypes])
 
 
-  /* Ramadan — enriched with per-period breakdown for dual-Ramadan (2030) */
+  /* Event stats — per-event breakdown for carousel */
   const ram = useMemo(() => {
     const periods = [...yrs].sort().flatMap(y =>
-      getRamadanPeriods(y).map(p => ({ ...p, yr: y }))
+      (ALL_EVENTS_BY_YEAR[y] || []).map(p => ({ ...p, yr: y }))
     )
 
-    const r = series.filter(x => x.isRamadan && (x.demand != null || x.supply != null))
-    const o = series.filter(x => !x.isRamadan && (x.demand != null || x.supply != null))
+    const r = series.filter(x => (x.isRamadan || x.isHajj) && (x.demand != null || x.supply != null))
+    const o = series.filter(x => !x.isRamadan && !x.isHajj && (x.demand != null || x.supply != null))
     const dp = a => a.length ? a.filter(x => x.gap < 0).length / a.length * 100 : 0
     const ad = a => a.length ? a.reduce((s, x) => s + Math.max(0, -x.gap), 0) / a.length : 0
     const mx = a => a.length ? a.reduce((m, x) => x.gap < m.gap ? x : m, a[0]) : null
-    // Per-period stats — days are matched by date range so they work even if series
-    // only covers part of a period (e.g. 2030 Dec Ramadan ends in 2031)
     const perPeriod = periods.map((p, i) => {
       const days = series.filter(x => x.date >= p.s && x.date <= p.e && (x.demand != null || x.supply != null))
       return {
         idx: i + 1,
-        label: yrs.size > 1
-          ? `رمضان ${p.yr}${periods.filter(x => x.yr === p.yr).length > 1 ? ' ' + (RAM_ORDINAL[i] || '') : ''}`
-          : (periods.length > 1 ? `رمضان ${RAM_ORDINAL[i] || '#' + (i + 1)}` : `رمضان ${p.yr}`),
+        label: `${p.name}${yrs.size > 1 ? ' ' + p.yr : ''}`,
         dateRange: `${fmtDate(p.s)} — ${fmtDate(p.e)}`,
         days: days.length,
         pct: dp(days),
@@ -2673,8 +2638,8 @@ function Dashboard({ db, fileDate }) {
       if (!r.demand || !r.supply) return
       const m = r.date.getMonth()
       const gYr = r.date.getFullYear()
-      if (!byMo[m]) byMo[m] = { sum: 0, n: 0, name: AR_MON[m], m, isRam: false, isHajj: false, hijriByGYear: {} }
-      byMo[m].sum += r.gap; byMo[m].n++
+      if (!byMo[m]) byMo[m] = { sum: 0, demSum: 0, supSum: 0, n: 0, name: AR_MON[m], m, isRam: false, isHajj: false, hijriByGYear: {} }
+      byMo[m].sum += r.gap; byMo[m].demSum += (r.demand ?? 0); byMo[m].supSum += (r.supply ?? 0); byMo[m].n++
       if (r.isRamadan) byMo[m].isRam = true
       if (r.isHajj) byMo[m].isHajj = true
       const parsed = getHijriMonthYear(r.hijriDate)
@@ -2685,7 +2650,7 @@ function Dashboard({ db, fileDate }) {
     })
     // hijriByYear: sorted array of { gYr, months[] }
     const monthly = Object.values(byMo).sort((a, b) => a.m - b.m).map(v => ({
-      name: v.name, gap: Math.round(v.sum / v.n), isRam: v.isRam, isHajj: v.isHajj,
+      name: v.name, gap: Math.round(v.sum / v.n), demand: Math.round(v.demSum / v.n), supply: Math.round(v.supSum / v.n), isRam: v.isRam, isHajj: v.isHajj,
       hijriByYear: Object.entries(v.hijriByGYear).sort((a, b) => a[0] - b[0]).map(([gYr, set]) => ({ gYr, months: [...set] }))
     }))
 
@@ -2708,9 +2673,8 @@ function Dashboard({ db, fileDate }) {
 
     // Seasonal
     const seasons = [
-      { name: 'رمضان', filter: r => r.isRamadan, color: T.ram },
-      { name: 'حج', filter: r => r.isHajj, color: T.hajj },
-      { name: 'باقي', filter: r => !r.isRamadan && !r.isHajj, color: T.txtSub },
+      { name: 'الفعاليات الكبرى', filter: r => r.isHajj, color: T.hajj },
+      { name: 'الفترات الباقية', filter: r => !r.isHajj, color: T.txtSub },
     ]
     const seasonal = seasons.map(s => {
       const rows = series.filter(r => s.filter(r) && r.demand && r.supply)
@@ -2736,8 +2700,9 @@ function Dashboard({ db, fileDate }) {
     ), [yrs, series])
 
   const hajjRefs = useMemo(() =>
-    [...yrs].sort().map(y => refB(HAJJ[y])).filter(Boolean),
-    [yrs, series])
+    [...yrs].sort().flatMap(y =>
+      (ALL_EVENTS_BY_YEAR[y] || []).map(ev => refB(ev)).filter(Boolean)
+    ), [yrs, series])
 
   const xTick = k => {
     const d = series.find(x => x.dateKey === k)
@@ -2754,12 +2719,12 @@ function Dashboard({ db, fileDate }) {
       [
         'التاريخ الميلادي',
         'التاريخ الهجري',
-        'المستهدفات',
-        'الطاقة الاستيعابية',
-        'الفجوة',
+        'المستهدفين',
+        'سعة المرافق',
+        'الفارق',
         'الحالة',
-        'رمضان',
-        'حج'
+        'فعالية كبرى',
+        'فعالية كبرى'
       ],
       ...series.map(r => [
         r.dateLabel ?? r.dateKey ?? '',
@@ -2776,11 +2741,11 @@ function Dashboard({ db, fileDate }) {
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(wb, ws, 'التفاصيل اليومية');
+    XLSX.utils.book_append_sheet(wb, ws, 'التفاصيل التشغيلية اليومية');
 
     XLSX.writeFile(
       wb,
-      `إيواء_مكة_${yr ?? [...yrs].sort().join('-')}.xlsx`
+      `ذكاء_الفعاليات_الكبرى_${yr ?? [...yrs].sort().join('-')}.xlsx`
     );
   };
 
@@ -2801,20 +2766,7 @@ function Dashboard({ db, fileDate }) {
       <filter id="glow-sup"><feGaussianBlur stdDeviation="3" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
     </defs>
   )
-  const Shading = () => (<>
-    {ramRefs.map((ref, i) => (
-      <ReferenceArea key={`ram-${i}`} x1={ref.x1} x2={ref.x2}
-        fill={T.ram} fillOpacity={.09}
-        stroke={T.ram} strokeOpacity={.28}
-        label={{ position: 'insideTopRight', fill: T.ram, fontSize: 13 }} />
-    ))}
-    {hajjRefs.map((ref, i) => (
-      <ReferenceArea key={`hajj-${i}`} x1={ref.x1} x2={ref.x2}
-        fill={T.hajj} fillOpacity={.08}
-        stroke={T.hajj} strokeOpacity={.28}
-        label={{ position: 'insideTopRight', fill: T.hajj, fontSize: 13 }} />
-    ))}
-  </>)
+  const Shading = () => null // Event shading removed
   const fmtAxis = v => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}م` : v >= 1000 ? `${(v / 1000).toFixed(0)}ألف` : `${v}`
   const monthStartKeys = useMemo(() =>
     yrs.size >= 2
@@ -2833,14 +2785,14 @@ function Dashboard({ db, fileDate }) {
   }
   const axisY = { tickFormatter: fmtAxis, tick: { fontSize: 10, fill: T.txtDim }, width: 52, axisLine: false, tickLine: false }
   const grid = { strokeDasharray: "3 6", stroke: 'rgba(65,64,66,0.07)', vertical: false }
-  const legFmt = { formatter: v => ({ demand: 'المستهدفات', supply: 'الطاقة الاستيعابية', deficit: 'عجز', surplus: 'فائض' }[v] || v), wrapperStyle: { fontSize: 11, paddingTop: 8, color: T.txtSub } }
+  const legFmt = { formatter: v => ({ demand: 'المستهدفين', supply: 'سعة المرافق', deficit: 'عجز', surplus: 'فائض' }[v] || v), wrapperStyle: { fontSize: 11, paddingTop: 8, color: T.txtSub } }
 
-  const [showExport, setShowExport] = useState(false)
+  // Export modal removed
   const [scrolled, setScrolled] = useState(false)
   const [showSc, setShowSc] = useState(false)
-  const SC_PCT_KEYS = ['sl', 'sf', 'sh', 'do_', 'di']
-  const hasAnyScChange = SC_PCT_KEYS.some(k => (sc[k] ?? 0) !== 0) || (sc.bnH ?? 3.1) !== 3.1 || (sc.bH ?? 4.3) !== 4.3
-  const activeScCount = SC_PCT_KEYS.filter(k => (sc[k] ?? 0) !== 0).length + ((sc.bnH ?? 3.1) !== 3.1 ? 1 : 0) + ((sc.bH ?? 4.3) !== 4.3 ? 1 : 0)
+  const SC_PCT_KEYS = ['sl', 'st', 'sc', 'se', 'sp', 'do_', 'di']
+  const hasAnyScChange = SC_PCT_KEYS.some(k => (sc[k] ?? 0) !== 0)
+  const activeScCount = SC_PCT_KEYS.filter(k => (sc[k] ?? 0) !== 0).length
 
   useEffect(() => {
     injectNavStyles()
@@ -2852,10 +2804,10 @@ function Dashboard({ db, fileDate }) {
 
   /* ══════════════════════════════════════ RENDER ══════════════════════════════════════ */
   return (
-    <div className="cl-root" style={{ direction: 'rtl', background: '#fefefe', minHeight: '100vh', color: '#414042' }}>
+    <div className="cl-root" style={{ direction: 'rtl', background: '#f0f4f8', minHeight: '100vh', color: '#1a2a3a' }}>
 
       {/* ── NAVBAR ── */}
-      <Navbar scrolled={true} navigate={navigate} />
+      <Navbar scrolled={true} navigate={navigate} isLanding={false} />
 
       {/* ── CONTENT (padded below fixed navbar) ── */}
       <div style={{ paddingTop: 80 }}>
@@ -2868,10 +2820,9 @@ function Dashboard({ db, fileDate }) {
           supTypes={supTypes} toggleSupType={toggleSupType}
           showSc={showSc} setShowSc={setShowSc}
           hasAnyScChange={hasAnyScChange} activeScCount={activeScCount}
-          onExport={() => setShowExport(true)}
-          onDetails={() => setModal(true)}
+          onExport={() => { }}
+          onDetails={() => { }}
           peakDemand={peakDemand} kpi={kpi} series={series} fileDate={fileDate}
-          TPname="إيواء مكة المكرمة "
         />
 
         {/* ── BODY — sidebar + content side by side ── */}
@@ -2895,31 +2846,34 @@ function Dashboard({ db, fileDate }) {
               {kpi ? (
                 <div className="kpi-top-grid">
 
-                  {/* 1. أعلى حمل يومي — exact number */}
+                  {/* 1. أعلى طلب متوقع — exact number */}
                   <div className="card fade-up"
                     style={{ padding: '14px 13px', borderTop: `2px solid ${T.dem}`, borderRadius: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.txtSub, lineHeight: 1.45 }}>أعلى حمل يومي <InfoBadge text="أعلى طلب يومي متوقع خلال الفترة المحددة" /></div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.txtSub, lineHeight: 1.45 }}>أعلى طلب متوقع
+                        <InfoBadge text="أعلى عدد زوار متوقع خلال الفترة المحددة." />
+                      </div>
                       {peakDemand && !peakDemand.isSingleDay && <span style={{ fontSize: 9.5, color: T.txtDim, fontWeight: 700, background: 'rgba(65,64,66,0.06)', border: '1px solid rgba(65,64,66,0.14)', padding: '1px 7px', borderRadius: 10, whiteSpace: 'nowrap' }}>{peakDemand.days} يوم</span>}
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 900, color: T.dem, lineHeight: 1 }}>                      {peakDemand ? fmtFull(peakDemand.value) : '—'}
-                      <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>معتمر/يوم</span>
+                      <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>زائر/يوم</span>
                     </div>
                     <div style={{ fontSize: 11.5, color: T.txtSub, fontWeight: 600, marginTop: 6 }}>
                       <PeriodLabel period={peakDemand} />
                     </div>
                   </div>
 
-                  {/* 2. أعلى طاقة استيعابية */}
+                  {/* 2. أعلى سعة للمرافق */}
                   <div className="card fade-up"
                     style={{ padding: '14px 13px', borderTop: `2px solid ${T.sup}`, borderRadius: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.txtSub, lineHeight: 1.45 }}>أعلى طاقة استيعابية <InfoBadge text="أعلى عدد أسرّة متاحة خلال الفترة المحددة" /></div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.txtSub, lineHeight: 1.45 }}>أعلى سعة للمرافق
+                        <InfoBadge text="أعلي عدد كراسي يمكن أن توفره المرافق خلال الفترة المحددة." /></div>
                       {peakSupply && !peakSupply.isSingleDay && <span style={{ fontSize: 9.5, color: T.txtDim, fontWeight: 700, background: 'rgba(65,64,66,0.06)', border: '1px solid rgba(65,64,66,0.14)', padding: '1px 7px', borderRadius: 10, whiteSpace: 'nowrap' }}>{peakSupply.days} يوم</span>}
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 900, color: T.sup, lineHeight: 1 }}>
                       {fmtFull(peakSupply?.value)}
-                      <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>سرير/يوم</span>
+                      <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>كرسي/يوم</span>
                     </div>
                     <div style={{ fontSize: 11.5, color: T.txtSub, fontWeight: 600, marginTop: 6 }}>
                       <PeriodLabel period={peakSupply} />
@@ -2935,12 +2889,14 @@ function Dashboard({ db, fileDate }) {
                       <div className="card fade-up"
                         style={{ padding: '14px 13px', borderTop: `2px solid ${color}`, borderRadius: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.txtSub, lineHeight: 1.45 }}>أعلى عجز <InfoBadge text="أعلى عجز يومي متوقع خلال الفترة المحددة" /></div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.txtSub, lineHeight: 1.45 }}>أعلى عجز
+                            <InfoBadge text="أعلى عجز يومي متوقع لسعة المرافق خلال الفترة المحددة." />
+                          </div>
                           {hasDef && kpi?.maxDef && !kpi.maxDef.isSingleDay && <span style={{ fontSize: 9.5, color: T.txtDim, fontWeight: 700, background: 'rgba(65,64,66,0.06)', border: '1px solid rgba(65,64,66,0.14)', padding: '1px 7px', borderRadius: 10, whiteSpace: 'nowrap' }}>{kpi.maxDef.days} يوم</span>}
                         </div>
                         <div style={{ fontSize: 22, fontWeight: 900, color, lineHeight: 1 }}>
                           {hasDef ? fmtFull(-gap) : '0'}
-                          {hasDef && <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>سرير/يوم</span>}
+                          {hasDef && <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>كرسي/يوم</span>}
                         </div>
                         <div style={{ fontSize: 11.5, color: T.txtSub, fontWeight: 600, marginTop: 6 }}>
                           {hasDef ? (
@@ -2959,13 +2915,14 @@ function Dashboard({ db, fileDate }) {
                       style={{ padding: '14px 13px', borderTop: `2px solid ${T.surplus}`, borderRadius: 12 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.txtSub, lineHeight: 1.45 }}>
-                          أعلى فائض <InfoBadge text="أعلى فائض يومي في الطاقة الاستيعابية خلال الفترة المحددة" />
+                          أعلى فائض
+                          <InfoBadge text="أعلى فائض يومي لسعة المرافق خلال الفترة المحددة." />
                         </div>
                         {kpi?.maxSur && !kpi.maxSur.isSingleDay && <span style={{ fontSize: 9.5, color: T.txtDim, fontWeight: 700, background: 'rgba(65,64,66,0.06)', border: '1px solid rgba(65,64,66,0.14)', padding: '1px 7px', borderRadius: 10, whiteSpace: 'nowrap' }}>{kpi.maxSur.days} يوم</span>}
                       </div>
                       <div style={{ fontSize: 22, fontWeight: 900, color: T.surplus, lineHeight: 1 }}>
                         {fmtFull(kpi.maxSur.value)}
-                        <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>سرير/يوم</span>
+                        <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>كرسي/يوم</span>
                       </div>
                       <div style={{ fontSize: 11.5, color: T.txtSub, fontWeight: 600, marginTop: 6 }}>
                         <PeriodLabel period={kpi?.maxSur} />
@@ -2973,8 +2930,20 @@ function Dashboard({ db, fileDate }) {
                     </div>
                   ) : (
                     <div className="card fade-up"
-                      style={{ padding: '14px 13px', borderTop: `2px solid rgba(65,64,66,0.12)`, borderRadius: 12, opacity: 0.4 }}>
-                      <div style={{ fontSize: 12, color: T.txtDim }}>لا يوجد فائض</div>
+                      style={{ padding: '14px 13px', borderTop: `2px solid ${T.txtSub}`, borderRadius: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T.txtSub, lineHeight: 1.45 }}>
+                          أعلى فائض
+                          <InfoBadge text="أعلى فائض يومي لسعة المرافق خلال الفترة المحددة." />
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: T.txtSub, lineHeight: 1 }}>
+                        0
+                        <span style={{ fontSize: 11.5, fontWeight: 500, marginRight: 5 }}>كرسي/يوم</span>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: T.txtDim, fontWeight: 600, marginTop: 6 }}>
+                        <span style={{ color: T.txtDim }}>لا يوجد فائض</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -3007,8 +2976,8 @@ function Dashboard({ db, fileDate }) {
                     <div style={{ width: 4, height: 36, borderRadius: 4, background: `linear-gradient(to bottom,${T.dem},${T.sup})`, flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: 16, fontWeight: 900, color: T.txt, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        الطاقة الاستيعابية مقابل المستهدفات
-                        <InfoBadge text="يوضح إجمالي الطلب المتوقع على الإيواء مقابل الطاقة الاستيعابية للفترة المحددة بشكل يومي" />
+                        سعة المرافق مقابل المستهدفين
+                        <InfoBadge text="مقارنة يومية بين سعة المرافق وفئات المستهدفين، مع إبراز فترات العجز والفائض والفعاليات المجدولة ضمن الفترة المحددة." />
                       </div>
                       <div style={{ fontSize: 13, color: T.txtDim, marginTop: -1 }}>
                         {yr ?? [...yrs].sort().join('، ')}
@@ -3055,10 +3024,8 @@ function Dashboard({ db, fileDate }) {
                     {/* Legend strip */}
                     <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(65,64,66,0.08)', flexWrap: 'wrap' }}>
                       {[
-                        { c: T.dem, l: 'المستهدفات', type: 'line' },
-                        { c: T.sup, l: 'الطاقة الاستيعابية', type: 'line' },
-                        { c: T.ram, l: 'رمضان', type: 'area' },
-                        { c: T.hajj, l: 'الحج', type: 'area' },
+                        { c: T.dem, l: 'المستهدفين', type: 'line' },
+                        { c: T.sup, l: 'سعة المرافق', type: 'line' },
                       ].map(x => (
                         <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: T.txtSub }}>
                           {x.type === 'area'
@@ -3080,7 +3047,7 @@ function Dashboard({ db, fileDate }) {
             </div>
 
             {/* ════════════════════════════════════════
-               ROW 4a — seasonal | ramadan carousel | باقي الأشهر
+               ROW 4a — seasonal | ramadan carousel | عادية الأشهر
             ════════════════════════════════════════ */}
             {kpi && (
               <div className="span-full">
@@ -3088,17 +3055,17 @@ function Dashboard({ db, fileDate }) {
                 {/* Top 3-col row */}
                 <div className="analysis-top-row">
 
-                  {/* Col 1: الفئات من المستهدفات */}
+                  {/* Col 1: الفئات من المستهدفين */}
                   <DemandSplitChart split={mini.split} />
 
-                  {/* Col 2: رمضان carousel */}
+                  {/* Col 2: events carousel */}
                   <RamadanCarousel periods={ram.perPeriod ?? []} ram={ram} T={T} />
 
-                  {/* Col 3: تحليل باقي الأشهر */}
+                  {/* Col 3: تحليل الفترات الاعتيادية */}
                   <div className="card" style={{ padding: 14 }}>
                     <div style={{ fontSize: 12, fontWeight: 900, color: T.txtSub, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 5 }}>
-                      تحليل باقي الأشهر <InfoBadge text="يوضح حالة العجز أو الفائض في الطاقة الاستيعابية خلال باقي الأشهر، خارج موسمي رمضان والحج" />
-                    </div>
+                      تحليل الفترات الاعتيادية
+                      <InfoBadge text="يوضح تحليل سعة المرافق وتحديد مستويات الفائض والعجز للفترات الاعتيادية خلال الفترة المحددة." />                    </div>
                     <div style={{ borderRadius: 8, padding: '8px 11px', fontSize: 11, fontWeight: 800, marginBottom: 10, background: ram.oPct < 30 ? T.surplusBg : T.deficitBg, color: ram.oPct < 30 ? T.surplus : T.deficit, border: `1px solid ${ram.oPct < 30 ? T.surplusL : T.deficitL}`, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {ram.oPct < 30
                         ? <><FiCheckCircle size={12} /> عجز في أقل من {Math.round(ram.oPct)}% من الأيام</>
@@ -3106,13 +3073,13 @@ function Dashboard({ db, fileDate }) {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 11, color: T.txtSub }}>متوسط العجز</span>
-                      <strong style={{ fontSize: 12, color: T.txt }}>{fmtFull(ram.oAvg)} سرير/يوم</strong>
+                      <strong style={{ fontSize: 12, color: T.txt }}>{fmtFull(ram.oAvg)} زائر/يوم</strong>
                     </div>
                     {ram.oMax?.gap < 0 && (
                       <div style={{ marginTop: 6 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                           <span style={{ fontSize: 11, color: T.txtSub }}>أعلى عجز</span>
-                          <strong style={{ fontSize: 12, color: T.deficit }}>{fmtFull(-ram.oMax.gap)} <span style={{ fontSize: 10, fontWeight: 500, color: T.txtDim }}>سرير/يوم</span></strong>
+                          <strong style={{ fontSize: 12, color: T.deficit }}>{fmtFull(-ram.oMax.gap)} <span style={{ fontSize: 10, fontWeight: 500, color: T.txtDim }}>زائر/يوم</span></strong>
                         </div>
                         <div style={{ fontSize: 10.5, color: T.txtSub, marginTop: 1, textAlign: 'left' }}>
                           {ram.oMax.dateLabel}{ram.oMax.hijriDate ? <span> · {ram.oMax.hijriDate}</span> : ''}
@@ -3121,7 +3088,7 @@ function Dashboard({ db, fileDate }) {
                     )}
                   </div>
 
-                  {/* Col 4: متوسط الفجوة اليومية */}
+                  {/* Col 4: متوسط الفجوة اليوميةة */}
                   {(() => {
                     const isGap = kpi.avgG < 0
                     const gapColor = isGap ? T.deficit : T.surplus
@@ -3135,7 +3102,8 @@ function Dashboard({ db, fileDate }) {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                             <div style={{ width: 3, height: 16, borderRadius: 3, flexShrink: 0 }} />
                             <span style={{ fontSize: 12, color: T.txtSub, display: 'flex', alignItems: 'center', gap: 5 }}>
-                              متوسط الفجوة اليومية <InfoBadge text="متوسط الفرق اليومي بين الطلب والطاقة — يعكس الضغط العام على المنظومة الفندقية طوال الفترة" />
+                              متوسط الفجوة اليومية
+                              <InfoBadge text="متوسط الفرق اليومي بين سعة المرافق والمستهدفين، يعكس مستوى العجز أو الفائض العام." />
                             </span>
                           </div>
                           <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 11px', borderRadius: 20, background: gapBg, color: gapColor, border: `1px solid ${gapBdr}`, display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -3144,17 +3112,17 @@ function Dashboard({ db, fileDate }) {
                         </div>
                         <div className="gap-analysis-row" style={{ alignItems: 'stretch', gap: 8 }}>
                           <div style={{ flex: 1, background: T.supBg, borderRadius: 10, border: `1px solid ${T.supL}`, padding: '10px 12px' }}>
-                            <div style={{ fontSize: 9.5, color: T.sup, fontWeight: 700, marginBottom: 4 }}>متوسط الطاقة الاستيعابية اليومية</div>
+                            <div style={{ fontSize: 9.5, color: T.sup, fontWeight: 700, marginBottom: 4 }}>متوسط سعة المرافق</div>
                             <div style={{ fontSize: 18, fontWeight: 900, color: T.sup, lineHeight: 1 }}>{fmtExact(kpi.avgS)}</div>
-                            <div style={{ fontSize: 9, color: T.txtDim, marginTop: 3 }}>سرير/يوم</div>
+                            <div style={{ fontSize: 9, color: T.txtDim, marginTop: 3 }}>زائر/يوم</div>
                           </div>
                           <div className="gap-analysis-separator" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                             <span style={{ fontSize: 11, color: gapColor, opacity: .6 }}>-</span>
                           </div>
                           <div style={{ flex: 1, background: T.demBg, borderRadius: 10, border: `1px solid ${T.demL}`, padding: '10px 12px' }}>
-                            <div style={{ fontSize: 9.5, color: T.dem, fontWeight: 700, marginBottom: 4 }}>متوسط المستهدفات اليومية</div>
+                            <div style={{ fontSize: 9.5, color: T.dem, fontWeight: 700, marginBottom: 4 }}>متوسط المستهدفين اليومية</div>
                             <div style={{ fontSize: 18, fontWeight: 900, color: T.dem, lineHeight: 1 }}>{fmtExact(kpi.avgD)}</div>
-                            <div style={{ fontSize: 9, color: T.txtDim, marginTop: 3 }}>معتمر/يوم</div>
+                            <div style={{ fontSize: 9, color: T.txtDim, marginTop: 3 }}>زائر/يوم</div>
                           </div>
                           <div className="gap-analysis-separator" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                             <span style={{ fontSize: 11, color: gapColor, opacity: .6 }}>=</span>
@@ -3162,12 +3130,12 @@ function Dashboard({ db, fileDate }) {
                           <div style={{ flex: 1, background: gapBg, borderRadius: 10, border: `1.5px solid ${gapBdr}`, padding: '10px 12px' }}>
                             <div style={{ fontSize: 9.5, color: gapColor, fontWeight: 700, marginBottom: 4 }}>{isGap ? 'متوسط العجز اليومي' : 'متوسط الفائض اليومي'}</div>
                             <div style={{ fontSize: 18, fontWeight: 900, color: gapColor, lineHeight: 1 }}>{fmtExact(Math.abs(kpi.avgG))}</div>
-                            <div style={{ fontSize: 9, color: T.txtDim, marginTop: 3 }}>سرير/يوم</div>
+                            <div style={{ fontSize: 9, color: T.txtDim, marginTop: 3 }}>زائر/يوم</div>
                           </div>
                         </div>
                         <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(65,64,66,0.08)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                            <span style={{ fontSize: 9, color: T.txtDim }}>نسبة تغطية المستهدفات</span>
+                            <span style={{ fontSize: 9, color: T.txtDim }}>نسبة تغطية المستهدفين</span>
                             <span style={{ fontSize: 9.5, fontWeight: 900, color: fillPct >= 100 ? T.surplus : T.deficit }}>{fillPct}%</span>
                           </div>
                           <div style={{ height: 5, borderRadius: 5, background: 'rgba(65,64,66,0.08)', overflow: 'hidden' }}>
@@ -3186,15 +3154,6 @@ function Dashboard({ db, fileDate }) {
 
           </div>{/* /content-area */}
         </div>{/* /main-layout */}
-
-        {showModal && <DetailsModal yr={yr ?? [...yrs].sort()[0]} tableRows={series} onClose={() => setModal(false)} onExport={exportXLSX} />}
-
-        {showExport && (
-          <ExportModal
-            onClose={() => setShowExport(false)}
-            payload={buildReportPayload({ yr, kpi, ram, sc, scope, peakDemand, series, demTypes, supTypes })}
-          />
-        )}
 
       </div>{/* /content padded wrapper */}
 

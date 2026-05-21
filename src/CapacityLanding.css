@@ -1,4 +1,4 @@
-/* CapacityLanding.css */
+/* CapacityLanding.css — Purple theme */
 
 .cl-root *,
 .cl-root *::before,
@@ -7,9 +7,9 @@
 }
 
 .cl-root {
-  font-family: "BahijTheSansArabic", "Segoe UI", sans-serif;
-  background: #1A1A1A;
-  color: #F4F1EB;
+  font-family: "TheYearofHandicrafts", "Segoe UI", sans-serif;
+  background: #0d0b1a;
+  color: #f0f0f8;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -55,7 +55,7 @@
 
 /* ── Navbar ── */
 .cl-nav-link {
-  color: #C8CACC;
+  color: #d1d5db;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -72,12 +72,12 @@
   right: 0;
   width: 0;
   height: 1.5px;
-  background: #967126;
+  background: #7c3aed;
   transition: width 0.25s ease;
 }
 
 .cl-nav-link:hover {
-  color: #D4AA52;
+  color: #a78bfa;
 }
 
 .cl-nav-link:hover::after {
