@@ -320,25 +320,20 @@ function HeroVideo({ src }) {
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-    const tryPlay = () => {
-      video.muted = true
-      video.play().catch(() => { })
-    }
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        tryPlay()
-        setTimeout(tryPlay, 300)
-      })
+    // Force muted via DOM (React's muted prop is unreliable for autoplay)
+    video.muted = true
+    video.play().catch(() => {
+      // Retry after a short delay
+      setTimeout(() => { video.muted = true; video.play().catch(() => { }) }, 500)
     })
   }, [src])
 
   const toggleSound = (e) => {
     e.stopPropagation()
-    if (videoRef.current) {
-      const nextMuted = !videoRef.current.muted
-      videoRef.current.muted = nextMuted
-      setIsMuted(nextMuted)
-    }
+    const video = videoRef.current
+    if (!video) return
+    video.muted = !video.muted
+    setIsMuted(video.muted)
   }
 
   return (
@@ -347,7 +342,7 @@ function HeroVideo({ src }) {
         ref={videoRef}
         key={src}
         autoPlay
-        muted={isMuted}
+        muted
         loop
         playsInline
         preload="auto"
