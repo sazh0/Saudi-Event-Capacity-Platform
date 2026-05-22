@@ -1787,13 +1787,13 @@ function PageHeader({
           {/* ── Row 1: Hero Title ── */}
           <div style={{ textAlign: 'center', padding: '50px 0 25px' }}>
             <h1 style={{
-              fontSize: 'clamp(42px, 4.5vw, 42px)', fontWeight: 900, lineHeight: 1.18,
+              fontSize: 'clamp(35px, 4.5vw, 42px)', fontWeight: 900, lineHeight: 1.18,
               color: T.txt, margin: '0 0 6px',
             }}>
               <span className="cl-shimmer-text">المرصد الوطني</span>
               <br />
               <span style={{ fontSize: '0.72em', fontWeight: 800, opacity: 0.85 }}>
-                لجاهزية الفعاليات الكبرى
+                لجاهزية مرافق الفعاليات الكبرى
               </span>
             </h1>
           </div>
