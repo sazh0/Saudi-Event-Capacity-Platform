@@ -670,19 +670,53 @@ function Hero({ navigate, videoSrc }) {
 function OverviewCards() {
   const cards = [
     {
-      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 2L22 7.5V18.5L13 24L4 18.5V7.5Z" stroke={C.bronze} strokeWidth="1.4" fill={`${C.bronze}12`} /><circle cx="13" cy="13" r="3.5" fill={C.bronze} fillOpacity=".7" /></svg>,
-      title: 'تحليل الطاقة الاستيعابية', accent: C.bronze,
-      desc: 'قياس دقيق للحدود التشغيلية الآمنة لكل نقطة اتصال مع تحليل الفجوات بين العرض والطلب.',
+      svg: (
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <path d="M3 18 Q13 10 23 18" stroke={C.bronze} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          <path d="M5 18v4M21 18v4M13 14v8" stroke={C.bronze} strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M3 22h20" stroke={C.bronze} strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="13" cy="11" r="2.5" fill={C.bronze} fillOpacity=".6" />
+          <path d="M10 5l3-2 3 2" stroke={C.bronze} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+      ),
+      title: 'هل المرافق تكفي الزوار؟',
+      accent: C.bronze,
+      desc: 'هل ملاعب الرياض ومسارح جدة وساحات الدرعية تكفي مقارنة يومية بين سعة المرافق وأعداد المستهدفين المحليين والدوليين لكل فعالية، تكشف العجز قبل حدوثه.',
     },
+
     {
-      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M2 17 Q6 9 11 12 Q16 15 21 7 L24 7" stroke={C.green} strokeWidth="2" strokeLinecap="round" fill="none" /><circle cx="11" cy="12" r="2.4" fill={C.green} fillOpacity=".7" /><circle cx="21" cy="7" r="2.4" fill={C.green} /></svg>,
-      title: 'سيناريوهات تفاعلية', accent: C.green,
-      desc: 'محاكاة سيناريوهات متعددة بتعديل المتغيرات ومشاهدة الأثر الفوري على المؤشرات.',
+      svg: (
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <line x1="5" y1="6" x2="21" y2="6" stroke={C.green} strokeWidth="1.3" strokeLinecap="round" />
+          <line x1="5" y1="13" x2="21" y2="13" stroke={C.green} strokeWidth="1.3" strokeLinecap="round" />
+          <line x1="5" y1="20" x2="21" y2="20" stroke={C.green} strokeWidth="1.3" strokeLinecap="round" />
+          <circle cx="10" cy="6" r="2.5" fill={C.green} stroke={C.charcoalD} strokeWidth="1" />
+          <circle cx="16" cy="13" r="2.5" fill={C.green} stroke={C.charcoalD} strokeWidth="1" />
+          <circle cx="8" cy="20" r="2.5" fill={C.green} stroke={C.charcoalD} strokeWidth="1" />
+        </svg>
+      ),
+      title: 'ماذا لو؟',
+      accent: C.green,
+      desc: 'كبر سعة الملاعب 30%، أو ارفع المستهدفين الدوليين 50%، وشاهد فوراً كيف يتغير العجز والفائض عبر مختلف المرافق.',
     },
+
     {
-      svg: <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="2" y="13" width="6" height="10" rx="2" fill={C.bronzeL} fillOpacity=".7" /><rect x="10" y="8" width="6" height="15" rx="2" fill={C.bronze} fillOpacity=".7" /><rect x="18" y="4" width="6" height="19" rx="2" fill={C.green} fillOpacity=".5" /></svg>,
-      title: 'لوحات بيانات احترافية', accent: C.bronzeL,
-      desc: 'رسوم بيانية تفاعلية ومؤشرات أداء رئيسية مع إمكانية التصدير والمقارنة عبر السنوات.',
+      svg: (
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <rect x="3" y="5" width="20" height="17" rx="3" stroke={C.bronzeL} strokeWidth="1.3" fill="none" />
+          <line x1="3" y1="10" x2="23" y2="10" stroke={C.bronzeL} strokeWidth="1.3" />
+          <line x1="8" y1="3" x2="8" y2="7" stroke={C.bronzeL} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="18" y1="3" x2="18" y2="7" stroke={C.bronzeL} strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="9" cy="15" r="1.5" fill={C.bronzeL} fillOpacity=".8" />
+          <circle cx="13" cy="15" r="1.5" fill={C.green} fillOpacity=".8" />
+          <circle cx="17" cy="15" r="1.5" fill={C.bronze} fillOpacity=".8" />
+          <circle cx="9" cy="19" r="1.5" fill={C.green} fillOpacity=".5" />
+          <circle cx="13" cy="19" r="1.5" fill={C.bronzeL} fillOpacity=".5" />
+        </svg>
+      ),
+      title: 'جاهزية كل فعالية',
+      accent: C.bronzeL,
+      desc: 'فورمولا 1، إكسبو 2030، كأس العالم 2034، ومواسم الرياض وجدة. تحليل تفصيلي لكل فعالية يشمل أعداد المستهدفين المتوقعة، سعة المرافق، ومستويات العجز والفائض.'
     },
   ]
 
@@ -761,7 +795,7 @@ export default function CapacityLanding() {
   return (
     <div className="cl-root">
       <Navbar scrolled={scrolled} navigate={navigate} isLanding={true} />
-      <Hero navigate={navigate} videoSrc="/public/herovideo.mp4" />
+      <Hero navigate={navigate} videoSrc="/herovideo.MP4" />
       <OverviewCards />
       <FAQSection />
       <Footer navigate={navigate} />

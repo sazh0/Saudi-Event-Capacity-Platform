@@ -309,7 +309,7 @@ input {
   background: #fafaf9;
   background-size: auto, auto, 20px 20px;
   background-position: 0 0, 0 0, 0 0;
-  color: #1a2a3a;
+  color: #5e36a3;
   display: flex;
   flex-direction: column;
   overflow: visible;
@@ -581,27 +581,15 @@ tbody tr:hover {
   background: rgba(250, 250, 249, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(65, 64, 66, 0.07);
 }
 
-/* Gold top accent bar */
-.sidebar-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 16px;
-  right: 16px;
-  height: 2px;
-  border-radius: 0 0 3px 3px;
-  background: linear-gradient(to left, transparent, rgba(150, 113, 38, 0.55), rgba(150, 113, 38, 0.80), rgba(150, 113, 38, 0.55), transparent);
-}
 
 .sidebar-logo {
   width: 28px;
   height: 28px;
   border-radius: 9px;
-  background: rgba(150, 113, 38, 0.10);
-  border: 1px solid rgba(150, 113, 38, 0.24);
+  background: rgba(197, 147, 246, 0.129);
+  border: 1px solid rgba(75, 68, 82, 0.098);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -817,7 +805,7 @@ tbody tr:hover {
 .sc-avg-badge.demand-badge {
   background: rgba(150, 113, 38, 0.08);
   color: #7c3aed;
-  border: 1px solid rgba(150, 113, 38, 0.20);
+  border: 1px solid rgba(65, 64, 66, 0.65);
 }
 
 /* ── Slider wrap & hint ── */
@@ -855,8 +843,8 @@ tbody tr:hover {
 /* ── Active changes panel ── */
 .active-changes-panel {
   margin: 6px 14px 12px;
-  background: rgba(150, 113, 38, 0.05);
-  border: 1px solid rgba(150, 113, 38, 0.18);
+  background: rgba(197, 147, 246, 0.082);
+  border: 1px solid rgba(75, 68, 82, 0.098);
   border-radius: 11px;
   padding: 11px 13px;
   animation: fadeUp .22s ease;
@@ -882,7 +870,7 @@ tbody tr:hover {
   background: #7c3aed;
   animation: pulseDot 1.8s ease infinite;
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(150, 113, 38, 0.5);
+  box-shadow: 0 0 6px rgba(65, 64, 66, 0.65);
 }
 
 @keyframes pulseDot {
@@ -891,13 +879,13 @@ tbody tr:hover {
   100% {
     opacity: 1;
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(150, 113, 38, 0.5);
+    box-shadow: 0 0 0 0 rgba(184, 158, 210, 0.625);
   }
 
   50% {
     opacity: .8;
     transform: scale(.9);
-    box-shadow: 0 0 0 4px rgba(150, 113, 38, 0);
+    box-shadow: 0 0 0 4px rgba(184, 158, 210, 0.625);
   }
 }
 
@@ -1211,7 +1199,7 @@ input.sc-sl-input::-webkit-slider-thumb {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #1e40af;
+  background: #7c3aed;
   border: 1.5px solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.22);
   margin-top: 0;
@@ -1240,7 +1228,7 @@ input.sc-sl-input:active::-webkit-slider-thumb {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #1e40af;
+  background: #7c3aed;
   border: 1.5px solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.22);
   cursor: grab;
@@ -1248,7 +1236,7 @@ input.sc-sl-input:active::-webkit-slider-thumb {
 }
 
 .sc-sl-input:active::-moz-range-thumb {
-  background: #050f1e;
+  background: #6239a7;
   transform: scale(0.92);
 }
 
@@ -1310,11 +1298,8 @@ input.sc-sl-input:active::-webkit-slider-thumb {
   gap: 7px;
   font-size: 9.5px;
   font-weight: 900;
-  letter-spacing: 0.6px;
   text-transform: uppercase;
-  margin-bottom: 8px;
   padding-bottom: 7px;
-  border-bottom: 1px solid rgba(65, 64, 66, 0.08);
 }
 
 .sc-dot {
@@ -1332,23 +1317,20 @@ input.sc-sl-input:active::-webkit-slider-thumb {
   color: #7c3aed;
 }
 
-.sc-vars-section-label.beds-label {
-  color: rgba(212, 170, 82, 0.78);
-}
 
 .supply-dot {
   background: #2563eb;
-  box-shadow: 0 0 5px rgba(0, 122, 83, 0.40);
+  box-shadow: 0 0 5px #2564eb9b;
 }
 
 .demand-dot {
   background: #7c3aed;
-  box-shadow: 0 0 5px rgba(150, 113, 38, 0.40);
+  box-shadow: 0 0 5px #7c3aed84;
 }
 
 .beds-dot {
   background: #7c3aed;
-  box-shadow: 0 0 5px rgba(150, 113, 38, 0.40);
+  box-shadow: 0 0 5px #7c3aed84;
 }
 
 .sc-section-sep {
@@ -1482,26 +1464,23 @@ input.sc-sl-input:active::-webkit-slider-thumb {
 }
 
 .sc-toggle-btn:hover {
-  background: rgba(0, 122, 83, 0.08);
-  border-color: rgba(0, 122, 83, 0.30);
-  color: #2563eb;
+  background: rgba(197, 147, 246, 0.129);
+  border-color: rgba(50, 48, 52, 0.04);
 }
 
 .sc-toggle-btn.active {
-  background: rgba(0, 122, 83, 0.10);
-  border-color: rgba(0, 122, 83, 0.35);
-  color: #2563eb;
+  border-color: rgba(50, 48, 52, 0.04);
   box-shadow: none;
 }
 
 .sc-toggle-btn.has-changes {
-  border-color: rgba(150, 113, 38, 0.35);
+  border-color: rgba(65, 64, 66, 0.14);
   color: #7c3aed;
 }
 
 .sc-toggle-btn.has-changes.active {
-  background: rgba(150, 113, 38, 0.07);
-  border-color: rgba(150, 113, 38, 0.40);
+  background: rgba(65, 64, 66, 0.04);
+  border-color: rgba(65, 64, 66, 0.14);
   box-shadow: none;
 }
 
@@ -2440,7 +2419,7 @@ input.sc-sl-input:active::-webkit-slider-thumb {
   .sidebar-close-btn,
   button {
     touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(150, 113, 38, 0.15);
+    -webkit-tap-highlight-color: rgba(65, 64, 66, 0.04);
   }
 
   /* Disable hover effects on pure-touch devices */
@@ -2662,7 +2641,7 @@ input.sc-sl-input:active::-webkit-slider-thumb {
 
   .sc-vars-section-label {
     font-size: 9px;
-    margin-bottom: 4px;
+    margin-top: 5px;
   }
 
   .sc-slider {

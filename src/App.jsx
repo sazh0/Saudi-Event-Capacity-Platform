@@ -2,6 +2,8 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { C, injectNavStyles, footerStyles, MODAL_CONTENT } from './theme'
+import { MdStadium } from "react-icons/md";
+import { FaUsers } from "react-icons/fa";
 import { Navbar, Footer, GlassModal } from './SharedLayout'
 // ═══ Event definitions (unified — no seasons/mega distinction) ═══
 const NAMED_EVENTS = {}
@@ -43,7 +45,6 @@ const getEventNames = (dt) => {
   return names
 }
 
-// RAMADAN/HAJJ backward compat — RAMADAN unused, HAJJ = first event per year for reference area
 const ALL_EVENTS_BY_YEAR = {}
 const RAMADAN = {}
 const HAJJ = {}
@@ -53,7 +54,6 @@ for (let yr = 2030; yr <= 2034; yr++) {
   RAMADAN[yr] = []  // no seasons concept
   HAJJ[yr] = evs[0] || { s: new Date(yr, 2, 7), e: new Date(yr, 2, 9) }
 }
-// ExportModal removed
 import {
   ComposedChart, Line, Bar, BarChart, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceArea, ReferenceLine,
@@ -363,12 +363,12 @@ function InfoBadge({ text }) {
   const [visible, setVisible] = useState(false)
   const [ttStyle, setTtStyle] = useState({})
   const ref = useRef(null)
+  const isTouchRef = useRef(false)
 
-  /* ── geometry constants ── */
-  const TT_W = 220        // desired tooltip width (px)
-  const EDGE_GAP = 10     // minimum distance from viewport edge (px)
-  const ARROW_GAP = 8     // gap between badge bottom/top and tooltip (px)
-  const MIN_HEIGHT = 56   // minimum vertical space needed to render below/above
+  const TT_W = 220
+  const EDGE_GAP = 10
+  const ARROW_GAP = 8
+  const MIN_HEIGHT = 56
 
   const computeTtStyle = useCallback(() => {
     if (!ref.current) return {}
@@ -376,24 +376,18 @@ function InfoBadge({ text }) {
     const vw = window.innerWidth
     const vh = window.innerHeight
 
-    /* ── vertical placement ── */
     const spaceBelow = vh - r.bottom - EDGE_GAP
     const spaceAbove = r.top - EDGE_GAP
     let topVal, bottomVal
 
     if (spaceBelow >= MIN_HEIGHT) {
-      /* preferred: below */
       topVal = r.bottom + ARROW_GAP
     } else if (spaceAbove >= MIN_HEIGHT) {
-      /* fallback: above */
       bottomVal = vh - r.top + ARROW_GAP
     } else {
-      /* last resort: below but clamped to keep inside viewport */
       topVal = Math.max(EDGE_GAP, Math.min(r.bottom + ARROW_GAP, vh - MIN_HEIGHT - EDGE_GAP))
     }
 
-    /* ── horizontal placement ── */
-    /* Start right-aligned to the badge; then clamp both edges */
     const effectiveW = Math.min(TT_W, vw - EDGE_GAP * 2)
     let leftVal = r.right - effectiveW
     leftVal = Math.max(EDGE_GAP, Math.min(leftVal, vw - effectiveW - EDGE_GAP))
@@ -411,55 +405,82 @@ function InfoBadge({ text }) {
     return s
   }, [])
 
-  const showTooltip = useCallback(() => {
+  const show = useCallback(() => {
     setTtStyle(computeTtStyle())
     setVisible(true)
   }, [computeTtStyle])
 
-  const hideTooltip = useCallback(() => setVisible(false), [])
+  const hide = useCallback(() => setVisible(false), [])
 
-  /* tap-to-toggle for touch devices */
+  /* Detect touch to suppress hover events */
+  useEffect(() => {
+    const markTouch = () => { isTouchRef.current = true }
+    document.addEventListener('touchstart', markTouch, { passive: true, once: true })
+    return () => document.removeEventListener('touchstart', markTouch)
+  }, [])
+
+  /* Click/tap toggle */
   const handleClick = useCallback((e) => {
     e.stopPropagation()
-    if (visible) hideTooltip()
-    else showTooltip()
-  }, [visible, showTooltip, hideTooltip])
+    if (visible) hide()
+    else show()
+  }, [visible, show, hide])
 
-  /* dismiss when user taps anywhere else on the page */
+  /* Dismiss on ANY outside tap/click + scroll */
   useEffect(() => {
     if (!visible) return
-    const dismiss = () => hideTooltip()
-    document.addEventListener('click', dismiss, { passive: true })
-    return () => document.removeEventListener('click', dismiss)
-  }, [visible, hideTooltip])
+    const dismiss = () => hide()
+    // Use timeout so the current click's stopPropagation doesn't block
+    const timer = setTimeout(() => {
+      document.addEventListener('click', dismiss, { passive: true, capture: true })
+      document.addEventListener('touchstart', dismiss, { passive: true })
+      window.addEventListener('scroll', dismiss, { passive: true, capture: true })
+    }, 10)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('click', dismiss, { capture: true })
+      document.removeEventListener('touchstart', dismiss)
+      window.removeEventListener('scroll', dismiss, { capture: true })
+    }
+  }, [visible, hide])
+
+  /* Hover: only on non-touch devices */
+  const handleEnter = useCallback(() => { if (!isTouchRef.current) show() }, [show])
+  const handleLeave = useCallback(() => { if (!isTouchRef.current) hide() }, [hide])
 
   return (
     <div
       ref={ref}
       style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
-      onMouseEnter={showTooltip}
-      onMouseLeave={hideTooltip}
-      onFocus={showTooltip}
-      onBlur={hideTooltip}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
       onClick={handleClick}
       tabIndex={0}
       role="button"
       aria-label="معلومات إضافية"
       aria-expanded={visible}
     >
-      {/* ── badge circle ── */}
       <div style={{
-        width: 15, height: 15, borderRadius: '50%',
+        width: 15,
+        height: 15,
+        borderRadius: '50%',
         border: `1.5px solid ${visible ? 'rgba(65,64,66,0.45)' : 'rgba(65,64,66,0.15)'}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 9, fontWeight: 700,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 9,
+        fontWeight: 700,
         color: visible ? 'rgba(65,64,66,0.60)' : 'rgba(65,64,66,0.35)',
-        cursor: 'default', flexShrink: 0, transition: 'all 0.18s ease',
-        minWidth: 15, minHeight: 15,
+        cursor: 'default',
+        flexShrink: 0,
+        transition: 'all 0.18s ease',
+        minWidth: 15,
+        minHeight: 15,
         userSelect: 'none',
-      }}>i</div>
+      }}>
+        <span style={{ transform: 'translateY(1px)' }}>i</span>
+      </div>
 
-      {/* ── portal tooltip — always escapes any stacking context ── */}
       {visible && createPortal(
         <div style={{
           ...ttStyle,
@@ -475,7 +496,6 @@ function InfoBadge({ text }) {
           boxShadow: '0 8px 28px rgba(65,64,66,0.16)',
           fontFamily: "'TheYearofHandicrafts', sans-serif",
           direction: 'rtl',
-          /* Subtle fade-in without layout jank */
           animation: 'fadeUp 0.14s ease both',
         }}>{text}</div>,
         document.body
@@ -1314,9 +1334,9 @@ function ScenarioSidebar({ sc, setSci, onClose }) {
   const impactPos = netImpact >= 0
 
   const ALL_ITEMS = [
-    { k: 'sl', l: 'الملاعب الرياضية', icon: <MdSports size={14} />, cat: 'supply' },
+    { k: 'sl', l: 'الملاعب الرياضية', icon: <MdSportsSoccer size={14} />, cat: 'supply' },
     { k: 'st', l: 'المسارح', icon: <MdMusicNote size={14} />, cat: 'supply' },
-    { k: 'sc', l: 'مراكز المؤتمرات', icon: <MdConstruction size={14} />, cat: 'supply' },
+    { k: 'sc', l: 'مراكز المؤتمرات', icon: <MdDiamond size={14} />, cat: 'supply' },
     { k: 'se', l: 'مناطق الترفيه', icon: <MdCelebration size={14} />, cat: 'supply' },
     { k: 'sp', l: 'الساحات الموسمية', icon: <FaCity size={13} />, cat: 'supply' },
     { k: 'do_', l: 'الزوار الدوليين', icon: <MdFlightTakeoff size={14} />, cat: 'demand' },
@@ -1332,8 +1352,9 @@ function ScenarioSidebar({ sc, setSci, onClose }) {
           <FiSliders size={14} style={{ color: T.bronzeXL }} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 900, color: T.txt }}>أداة السيناريوهات</div>
-          <div style={{ fontSize: 9, color: T.txtSub, marginTop: 1, fontWeight: 500 }}>محاكاة أثر توسيع المرافق أو نمو المستهدفين</div>
+          <div style={{ fontSize: 12, fontWeight: 900, color: T.txt }}>ماذا لو؟</div>
+          <div style={{ fontSize: 9, color: T.txtSub, marginTop: 1, fontWeight: 500 }}>
+            محاكاة أثر زيادة أو انخفاض سعة المرافق وأعداد المستهدفين على الفجوات الاستيعابية          </div>
         </div>
         {hasAnyChange && <div className="sidebar-active-badge">{activeCount}</div>}
         {onClose && (
@@ -1351,9 +1372,9 @@ function ScenarioSidebar({ sc, setSci, onClose }) {
           سعة المرافق
         </div>
         {[
-          { k: 'sl', l: 'الملاعب الرياضية', icon: <MdSports size={12} /> },
+          { k: 'sl', l: 'الملاعب الرياضية', icon: <MdSportsSoccer size={12} /> },
           { k: 'st', l: 'المسارح', icon: <MdMusicNote size={12} /> },
-          { k: 'sc', l: 'مراكز المؤتمرات', icon: <MdConstruction size={12} /> },
+          { k: 'sc', l: 'مراكز المؤتمرات', icon: <MdDiamond size={12} /> },
           { k: 'se', l: 'مناطق الترفيه', icon: <MdCelebration size={12} /> },
           { k: 'sp', l: 'الساحات الموسمية', icon: <FaCity size={11} /> },
         ].map(({ k, l, icon }) => (
@@ -1393,7 +1414,7 @@ function ScenarioSidebar({ sc, setSci, onClose }) {
               return (
                 <div key={i.k} className="sc-change-row">
                   <span className="sc-change-cat" style={{ background: i.cat === 'supply' ? `${T.sup}18` : `${T.dem}18`, color: i.cat === 'supply' ? T.sup : T.dem }}>
-                    {i.cat === 'supply' ? 'سعة' : 'طلب'}
+                    {i.cat === 'supply' ? 'سعة المرافق' : 'المستهدفين'}
                   </span>
                   <span className="sc-change-icon">{i.icon}</span>
                   <span className="sc-change-label">{i.l}</span>
@@ -1809,7 +1830,7 @@ function PageHeader({
                     <circle cx="7" cy="7" r="5.8" stroke={T.bronzeXL} strokeWidth="1.3" />
                     <path d="M7 4v3.2l2 1.2" stroke={T.bronzeXL} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="ph-chip-label">آخر تحديث</span>
+                  <span className="ph-chip-label">آخر تحديث للبيانات</span>
                   <span className="ph-chip-value" style={{ color: T.bronzeXL }}>{formatted}</span>
                 </div>
               )
@@ -1880,7 +1901,8 @@ function PageHeader({
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
                   <path d="M2 4h10M2 7h7M2 10h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                 </svg>
-                أداة السيناريوهات                {hasAnyScChange && <span className="sc-toggle-badge">{activeScCount}</span>}
+                ماذا لو؟
+                {hasAnyScChange && <span className="sc-toggle-badge">{activeScCount}</span>}
               </button>
             </div>
           </div>
@@ -2041,8 +2063,7 @@ function PageHeader({
                       borderBottom: `1px solid ${T.sup}22`,
                       display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 11, alignItems: 'start',
                     }}>
-                      <MdCircle size={18} style={{ color: T.sup, marginTop: 2 }} />
-                      <div>
+                      <MdStadium size={15} style={{ color: T.sup, marginTop: 1 }} />                      <div>
                         <div style={{ fontSize: 13, fontWeight: 900, color: T.sup, marginBottom: 3 }}>مرافق الفعاليات</div>
                         <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>إجمالي سعة مرافق الفعاليات الكبرى</div>
                         <div style={{ fontSize: 11, color: T.txtDim, lineHeight: 1.75 }}>الحد الأقصى من عدد الأشخاص الذين تستوعبهم مرافق الفعاليات يومياً (بالكراسي/المقاعد)، وتشمل:</div>
@@ -2085,7 +2106,7 @@ function PageHeader({
                       borderBottom: `1px solid ${T.dem}22`,
                       display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 11, alignItems: 'start',
                     }}>
-                      <MdDiamond size={18} style={{ color: T.dem, marginTop: 2 }} />
+                      <FaUsers size={15} style={{ color: T.dem, marginTop: 2 }} />
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 900, color: T.dem, marginBottom: 3 }}>المستهدفين</div>
                         <div style={{ fontSize: 12, fontWeight: 700, color: T.txtSub, marginBottom: 4 }}>إجمالي أعداد المستهدفين المتوقعينين</div>
