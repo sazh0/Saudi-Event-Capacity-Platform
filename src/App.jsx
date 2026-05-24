@@ -1410,7 +1410,7 @@ function ScenarioSidebar({ sc, setSci, onClose }) {
             {ALL_ITEMS.filter(i => (sc[i.k] ?? 0) !== 0).map(i => {
               const val = sc[i.k]
               const isPos = val > 0
-              const color = i.cat === 'supply' ? (isPos ? T.surplus : T.deficit) : (isPos ? T.deficit : T.surplus)
+              const color = i.cat === 'supply' ? (isPos ? T.surplus : T.deficit) : (isPos ? T.surplus : T.deficit)
               return (
                 <div key={i.k} className="sc-change-row">
                   <span className="sc-change-cat" style={{ background: i.cat === 'supply' ? `${T.sup}18` : `${T.dem}18`, color: i.cat === 'supply' ? T.sup : T.dem }}>
