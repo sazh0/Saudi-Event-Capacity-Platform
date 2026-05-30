@@ -21,7 +21,7 @@ A national platform for measuring infrastructure **readiness and capacity** for 
 ---
 
 <div align="center">
-  <img src="images/AppPortfolio.png" alt="AWJ Platform Preview" width="97%"/>
+  <img src="images/AppPortfolio.gif" alt="AWJ Platform Preview" width="97%"/>
 </div>
 
 <p align="center">
