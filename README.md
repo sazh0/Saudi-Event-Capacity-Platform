@@ -14,7 +14,7 @@
 
 A national platform for measuring infrastructure **readiness and capacity** for Saudi Arabia's major upcoming events, providing daily deficit/surplus analysis, scenario simulation, and strategic planning support across the **2030–2034** event horizon.
 
-[🌐 Visit the Website ](https://saudi-events-capacity.vercel.app/)
+[🌐 Visit the Website | www.saudieventscapacity.com ](https://www.saudieventscapacity.com/)
 
 </div>
 
